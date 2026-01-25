@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox spacing="20.0" style="-fx-background-color: white; -fx-padding: 30;"
+      stylesheets="@styles.css"
+      xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
+      fx:controller="it.unicam.cs.mpgc.jtime122631.controller.ProjectDialogController">
+
+    <Label text="Nuovo Progetto" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #1e293b;"/>
+
+    <VBox spacing="10">
+        <Label text="Nome Progetto *" style="-fx-font-weight: bold; -fx-text-fill: #64748b;"/>
+        <TextField fx:id="nameField" promptText="Es. Sviluppo App Mobile" />
+    </VBox>
+
+    <VBox spacing="10">
+        <Label text="Descrizione" style="-fx-font-weight: bold; -fx-text-fill: #64748b;"/>
+        <TextArea fx:id="descriptionArea" promptText="Breve descrizione degli obiettivi..." prefRowCount="4" wrapText="true"/>
+    </VBox>
+
+    <HBox spacing="15" alignment="CENTER_RIGHT" style="-fx-padding: 20 0 0 0;">
+        <Button text="Annulla" onAction="#handleCancel" styleClass="secondary-button"/>
+        <Button text="Salva Progetto" onAction="#handleSave" styleClass="action-button"/>
+    </HBox>
+
+</VBox>

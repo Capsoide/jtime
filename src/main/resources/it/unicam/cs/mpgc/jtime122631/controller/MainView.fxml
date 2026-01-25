@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.StackPane?>
+
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="it.unicam.cs.mpgc.jtime122631.controller.MainController"
+            prefHeight="700.0" prefWidth="1000.0"
+            stylesheets="@styles.css">
+
+    <left>
+        <VBox styleClass="sidebar" prefWidth="250.0" spacing="10.0">
+            <Label text="JTime Manager" styleClass="app-title"/>
+
+            <Button fx:id="btnReports" text="Report" styleClass="menu-button" maxWidth="Infinity" onAction="#showReports"/>
+            <Button fx:id="btnProjects" text="Progetti" styleClass="menu-button" maxWidth="Infinity" onAction="#showProjects"/>
+            <Button fx:id="btnPlanning" text="Pianificazione" styleClass="menu-button" maxWidth="Infinity" onAction="#showPlanning"/>
+
+            <VBox VBox.vgrow="ALWAYS"/>
+
+            <VBox spacing="2" alignment="CENTER_LEFT">
+                <Label text="Made by Nicola Capancioni with &#x2764; for Unicam"
+                       textFill="#7f8c8d"
+                       wrapText="true"
+                       maxWidth="230"
+                       style="-fx-font-size: 10px; -fx-font-style: italic;"/>
+            </VBox>
+        </VBox>
+    </left>
+
+    <center>
+        <StackPane fx:id="contentArea" styleClass="content-area"/>
+    </center>
+
+</BorderPane>

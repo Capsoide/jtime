@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.chart.BarChart?>
+<?import javafx.scene.chart.CategoryAxis?>
+<?import javafx.scene.chart.NumberAxis?>
+<?import javafx.scene.chart.PieChart?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-background: transparent;"
+            xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
+            fx:controller="it.unicam.cs.mpgc.jtime122631.controller.ReportController">
+
+    <VBox spacing="30.0" styleClass="content-area">
+
+        <VBox>
+            <Label text="Report &amp; Statistiche" styleClass="header-label"/>
+            <Label text="Panoramica delle performance" style="-fx-text-fill: #64748b; -fx-font-size: 14px;"/>
+        </VBox>
+
+        <HBox spacing="20" alignment="CENTER_LEFT">
+
+            <VBox styleClass="stat-card, card-blue" HBox.hgrow="ALWAYS" maxWidth="Infinity">
+                <Label text="PROGETTI ATTIVI" styleClass="stat-title"/>
+                <Label fx:id="lblActiveProjects" text="0" styleClass="stat-value"/>
+            </VBox>
+
+            <VBox styleClass="stat-card, card-red" HBox.hgrow="ALWAYS" maxWidth="Infinity">
+                <Label text="TASK DA FARE" styleClass="stat-title"/>
+                <Label fx:id="lblPendingTasks" text="0" styleClass="stat-value"/>
+            </VBox>
+
+            <VBox fx:id="cardOverdue" styleClass="stat-card" HBox.hgrow="ALWAYS" maxWidth="Infinity">
+                <Label text="TASK ARRETRATI" styleClass="stat-title"/>
+                <Label fx:id="lblOverdue" text="0" styleClass="stat-value"/>
+            </VBox>
+
+            <VBox styleClass="stat-card, card-green" HBox.hgrow="ALWAYS" maxWidth="Infinity">
+                <Label text="TASK COMPLETATI" styleClass="stat-title"/>
+                <Label fx:id="lblCompletedTasks" text="0" styleClass="stat-value"/>
+            </VBox>
+
+            <VBox styleClass="stat-card, card-orange" HBox.hgrow="ALWAYS" maxWidth="Infinity">
+                <Label text="ORE STIMATE (TOT)" styleClass="stat-title"/>
+                <Label fx:id="lblTotalEstimated" text="0h" styleClass="stat-value"/>
+            </VBox>
+
+            <VBox styleClass="stat-card, card-purple" HBox.hgrow="ALWAYS" maxWidth="Infinity">
+                <Label text="ORE EFFETTIVE (TOT)" styleClass="stat-title"/>
+                <Label fx:id="lblTotalActual" text="0h" styleClass="stat-value"/>
+            </VBox>
+        </HBox>
+
+        <HBox spacing="20" VBox.vgrow="ALWAYS">
+            <VBox style="-fx-background-color: white; -fx-background-radius: 15; -fx-padding: 20; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 10, 0, 0, 5);"
+                  HBox.hgrow="ALWAYS">
+                <Label text="Distribuzione Progetti" style="-fx-font-weight: bold; -fx-font-size: 16px; -fx-text-fill: #334155;"/>
+                <PieChart fx:id="projectPieChart" labelsVisible="true" legendVisible="true" minHeight="300"/>
+            </VBox>
+
+            <VBox style="-fx-background-color: white; -fx-background-radius: 15; -fx-padding: 20; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 10, 0, 0, 5);"
+                  HBox.hgrow="ALWAYS">
+                <Label text="Stato Attività" style="-fx-font-weight: bold; -fx-font-size: 16px; -fx-text-fill: #334155;"/>
+                <BarChart fx:id="taskBarChart" legendVisible="true" minHeight="300">
+                    <xAxis> <CategoryAxis label="Tipologia" /> </xAxis>
+                    <yAxis> <NumberAxis label="Quantità" /> </yAxis>
+                </BarChart>
+            </VBox>
+        </HBox>
+
+    </VBox>
+</ScrollPane>
