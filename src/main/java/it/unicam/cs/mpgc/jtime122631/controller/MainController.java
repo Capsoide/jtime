@@ -3,6 +3,8 @@ package it.unicam.cs.mpgc.jtime122631.controller;
 import it.unicam.cs.mpgc.jtime122631.model.InfoProject;
 import it.unicam.cs.mpgc.jtime122631.service.ProjectService;
 import it.unicam.cs.mpgc.jtime122631.service.TaskService;
+import java.io.IOException;
+
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -12,7 +14,6 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
 
-import java.io.IOException;
 
 public class MainController {
 
