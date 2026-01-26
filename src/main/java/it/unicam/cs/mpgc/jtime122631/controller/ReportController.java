@@ -18,10 +18,8 @@ import java.util.List;
 public class ReportController {
     @FXML private VBox cardOverdue;
     @FXML private Label lblOverdue;
-    @FXML private Label lblActiveProjects;
     @FXML private Label lblPendingTasks;
     @FXML private Label lblCompletedTasks;
-    @FXML private Label lblTotalEstimated;
     @FXML private Label lblTotalActual;
     @FXML private PieChart projectPieChart;
     @FXML private BarChart<String, Number> taskBarChart;
@@ -41,19 +39,16 @@ public class ReportController {
         long activeProj = projectService.countActiveProjects();
         long completedProj = projectService.countCompletedProjects();
         long totalProj = activeProj + completedProj;
-
         long completedTasks = taskService.countCompletedTasks();
         long totalTasks = taskService.countTotalTasks();
         long pendingTasks = totalTasks - completedTasks;
 
-        Duration totalEst = taskService.getTotalEstimatedTime();
         Duration totalAct = taskService.getTotalActualTime();
 
         List<InfoTask> overdueList = taskService.getOverdueTasks();
         int overdueCount = overdueList.size();
 
         lblOverdue.setText(String.valueOf(overdueCount));
-
         cardOverdue.getStyleClass().remove("card-alarm");
 
         if (overdueCount > 0) {
@@ -63,10 +58,8 @@ public class ReportController {
             lblOverdue.setStyle("-fx-text-fill: #1e293b;");
         }
 
-        lblActiveProjects.setText(String.valueOf(activeProj));
         lblPendingTasks.setText(String.valueOf(pendingTasks));
         lblCompletedTasks.setText(String.valueOf(completedTasks));
-        lblTotalEstimated.setText(formatDuration(totalEst));
         lblTotalActual.setText(formatDuration(totalAct));
 
         String labelActive = String.format("Attivi (%d%%)", totalProj > 0 ? (activeProj * 100 / totalProj) : 0);
@@ -86,7 +79,7 @@ public class ReportController {
         XYChart.Data<String, Number> dataCompleted = new XYChart.Data<>("Completati", completedTasks);
 
         dataPending.nodeProperty().addListener((obs, oldNode, newNode) -> {
-            if (newNode != null) newNode.setStyle("-fx-bar-fill: #2563eb;");
+            if (newNode != null) newNode.setStyle("-fx-bar-fill: #dc2626;");
         });
 
         dataCompleted.nodeProperty().addListener((obs, oldNode, newNode) -> {

@@ -133,25 +133,27 @@ public class MainController {
 
         if (!overdueTasks.isEmpty()) {
             Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-
             if (contentArea.getScene() != null && contentArea.getScene().getWindow() != null) {
                 alert.initOwner(contentArea.getScene().getWindow());
             }
-
             alert.setTitle("Pianificazione");
             alert.setHeaderText("Hai " + overdueTasks.size() + " attività lasciate indietro!");
-            alert.setContentText("Vuoi spostarle tutte alla pianificazione di oggi?");
+            alert.setContentText("Vuoi spostarle tutte alla pianificazione di OGGI?");
 
-            ButtonType btnYes = new ButtonType("Sì, sposta a oggi");
-            ButtonType btnNo = new ButtonType("No, lasciale indietro");
+            ButtonType btnYes = new ButtonType("Sì, sposta a Oggi");
+            ButtonType btnNo = new ButtonType("No, lasciale lì");
             alert.getButtonTypes().setAll(btnYes, btnNo);
 
             java.util.Optional<ButtonType> result = alert.showAndWait();
 
             if (result.isPresent() && result.get() == btnYes) {
                 taskService.rescheduleAllToToday(overdueTasks);
+                showReports();  //aggiorna i contatori
 
                 Alert success = new Alert(Alert.AlertType.INFORMATION);
+                if (contentArea.getScene() != null && contentArea.getScene().getWindow() != null) {
+                    success.initOwner(contentArea.getScene().getWindow());
+                }
                 success.setHeaderText("Aggiornamento completato");
                 success.setContentText("Le attività sono ora nella lista di oggi.");
                 success.show();

@@ -22,9 +22,9 @@
 
         <HBox spacing="20" alignment="CENTER_LEFT">
 
-            <VBox styleClass="stat-card, card-blue" HBox.hgrow="ALWAYS" maxWidth="Infinity">
-                <Label text="PROGETTI ATTIVI" styleClass="stat-title"/>
-                <Label fx:id="lblActiveProjects" text="0" styleClass="stat-value"/>
+            <VBox fx:id="cardOverdue" styleClass="stat-card" HBox.hgrow="ALWAYS" maxWidth="Infinity">
+                <Label text="TASK ARRETRATI" styleClass="stat-title"/>
+                <Label fx:id="lblOverdue" text="0" styleClass="stat-value"/>
             </VBox>
 
             <VBox styleClass="stat-card, card-red" HBox.hgrow="ALWAYS" maxWidth="Infinity">
@@ -32,25 +32,16 @@
                 <Label fx:id="lblPendingTasks" text="0" styleClass="stat-value"/>
             </VBox>
 
-            <VBox fx:id="cardOverdue" styleClass="stat-card" HBox.hgrow="ALWAYS" maxWidth="Infinity">
-                <Label text="TASK ARRETRATI" styleClass="stat-title"/>
-                <Label fx:id="lblOverdue" text="0" styleClass="stat-value"/>
-            </VBox>
-
             <VBox styleClass="stat-card, card-green" HBox.hgrow="ALWAYS" maxWidth="Infinity">
                 <Label text="TASK COMPLETATI" styleClass="stat-title"/>
                 <Label fx:id="lblCompletedTasks" text="0" styleClass="stat-value"/>
             </VBox>
 
-            <VBox styleClass="stat-card, card-orange" HBox.hgrow="ALWAYS" maxWidth="Infinity">
-                <Label text="ORE STIMATE (TOT)" styleClass="stat-title"/>
-                <Label fx:id="lblTotalEstimated" text="0h" styleClass="stat-value"/>
-            </VBox>
-
             <VBox styleClass="stat-card, card-purple" HBox.hgrow="ALWAYS" maxWidth="Infinity">
-                <Label text="ORE EFFETTIVE (TOT)" styleClass="stat-title"/>
+                <Label text="ORE EFFETTIVE" styleClass="stat-title"/>
                 <Label fx:id="lblTotalActual" text="0h" styleClass="stat-value"/>
             </VBox>
+
         </HBox>
 
         <HBox spacing="20" VBox.vgrow="ALWAYS">

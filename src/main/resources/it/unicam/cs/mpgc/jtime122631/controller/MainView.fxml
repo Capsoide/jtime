@@ -27,12 +27,12 @@
 
             <VBox spacing="2" alignment="CENTER_LEFT">
                 <TextFlow maxWidth="230">
-                    <Label text="Made by " textFill="#7f8c8d" style="-fx-font-size: 10px; -fx-font-style: italic;"/>
+                    <Label text="Made by " textFill="#ffffff" style="-fx-font-size: 9px; -fx-font-style: italic;"/>
 
                     <Hyperlink text="Nicola Capancioni" onAction="#handleVisitWebsite"
-                               style="-fx-font-size: 10px; -fx-font-style: italic; -fx-padding: 0; -fx-border-width: 0; -fx-underline: true; -fx-text-fill: #60a5fa;"/>
+                               style="-fx-font-size: 9px; -fx-font-style: italic; -fx-font-weight: bold; -fx-padding: 0; -fx-border-width: 0; -fx-underline: false; -fx-text-fill: #ffffff;"/>
 
-                    <Label text=" with &#x2764; for Unicam" textFill="#7f8c8d" style="-fx-font-size: 10px; -fx-font-style: italic;"/>
+                    <Label text=" with &#x2764; for Unicam" textFill="#ffffff" style="-fx-font-size: 9px; -fx-font-style: italic;"/>
                 </TextFlow>
             </VBox>
         </VBox>
