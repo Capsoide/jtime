@@ -6,6 +6,8 @@
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.text.TextFlow?>
+<?import javafx.scene.control.Hyperlink?>
 
 <BorderPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
@@ -24,11 +26,14 @@
             <VBox VBox.vgrow="ALWAYS"/>
 
             <VBox spacing="2" alignment="CENTER_LEFT">
-                <Label text="Made by Nicola Capancioni with &#x2764; for Unicam"
-                       textFill="#7f8c8d"
-                       wrapText="true"
-                       maxWidth="230"
-                       style="-fx-font-size: 10px; -fx-font-style: italic;"/>
+                <TextFlow maxWidth="230">
+                    <Label text="Made by " textFill="#7f8c8d" style="-fx-font-size: 10px; -fx-font-style: italic;"/>
+
+                    <Hyperlink text="Nicola Capancioni" onAction="#handleVisitWebsite"
+                               style="-fx-font-size: 10px; -fx-font-style: italic; -fx-padding: 0; -fx-border-width: 0; -fx-underline: true; -fx-text-fill: #60a5fa;"/>
+
+                    <Label text=" with &#x2764; for Unicam" textFill="#7f8c8d" style="-fx-font-size: 10px; -fx-font-style: italic;"/>
+                </TextFlow>
             </VBox>
         </VBox>
     </left>

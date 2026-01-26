@@ -158,4 +158,14 @@ public class MainController {
             }
         }
     }
+
+    @FXML
+    private void handleVisitWebsite() {
+        try {
+            String url = "https://github.com/Capsoide";
+            java.awt.Desktop.getDesktop().browse(new java.net.URI(url));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 }
