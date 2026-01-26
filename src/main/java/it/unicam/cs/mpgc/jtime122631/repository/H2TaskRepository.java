@@ -195,7 +195,6 @@ public class H2TaskRepository implements TaskRepository {
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    // Usiamo mapRow che hai già definito alla riga 115, è più sicuro!
                     tasks.add(mapRow(rs));
                 }
             }
