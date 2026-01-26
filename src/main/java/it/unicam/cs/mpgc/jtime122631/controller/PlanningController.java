@@ -74,7 +74,7 @@ public class PlanningController {
 
         if (remainingMinutes == 0 && !tasks.isEmpty()) {
             totalTimeLabel.setText("Task completate!");
-            totalTimeLabel.setStyle("-fx-text-fill: #15803d; -fx-font-size: 14px; -fx-font-weight: bold;"); // Verde scuro
+            totalTimeLabel.setStyle("-fx-text-fill: #15803d; -fx-font-size: 14px; -fx-font-weight: bold;");
         } else {
             totalTimeLabel.setText(String.format("Da completare: %dh %dm", hours, minutes));
 

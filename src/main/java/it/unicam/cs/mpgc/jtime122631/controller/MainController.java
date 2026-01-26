@@ -46,6 +46,7 @@ public class MainController {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/it/unicam/cs/mpgc/jtime122631/controller/ProjectsView.fxml"));
             Parent view = loader.load();
             ProjectsController controller = loader.getController();
+
             controller.setProjectService(projectService);
             controller.setMainController(this);
             contentArea.getChildren().setAll(view);
