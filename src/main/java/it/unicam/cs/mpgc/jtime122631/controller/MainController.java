@@ -132,12 +132,17 @@ public class MainController {
 
         if (!overdueTasks.isEmpty()) {
             Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+
+            if (contentArea.getScene() != null && contentArea.getScene().getWindow() != null) {
+                alert.initOwner(contentArea.getScene().getWindow());
+            }
+
             alert.setTitle("Pianificazione");
             alert.setHeaderText("Hai " + overdueTasks.size() + " attività lasciate indietro!");
-            alert.setContentText("Vuoi spostarle tutte alla pianificazione di OGGI?");
+            alert.setContentText("Vuoi spostarle tutte alla pianificazione di oggi?");
 
-            ButtonType btnYes = new ButtonType("Sì, sposta a Oggi");
-            ButtonType btnNo = new ButtonType("No, lasciale lì");
+            ButtonType btnYes = new ButtonType("Sì, sposta a oggi");
+            ButtonType btnNo = new ButtonType("No, lasciale indietro");
             alert.getButtonTypes().setAll(btnYes, btnNo);
 
             java.util.Optional<ButtonType> result = alert.showAndWait();
