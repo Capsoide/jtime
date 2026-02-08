@@ -1,14 +1,15 @@
 package it.unicam.cs.mpgc.jtime122631.service;
 
 import it.unicam.cs.mpgc.jtime122631.model.InfoTask;
+import it.unicam.cs.mpgc.jtime122631.model.TaskPriority;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
 public interface TaskService {
-    void createTask(int projectId, String title, LocalDate scheduledDate, Duration estimated);
-    void updateTask(int id, String title, LocalDate scheduledDate, Duration estimated);
+    void createTask(int projectId, String title, LocalDate scheduledDate, Duration estimated, TaskPriority priority);
+    void updateTask(int id, String title, LocalDate scheduledDate, Duration estimated, TaskPriority priority);
     void completeTask(int taskId, Duration actualDuration);
     void deleteTask(int taskId);
     void rescheduleTask(int taskId, LocalDate newDate);

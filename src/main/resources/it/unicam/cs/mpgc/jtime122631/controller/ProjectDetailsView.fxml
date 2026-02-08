@@ -35,7 +35,7 @@
         <TableView fx:id="tasksTable" style="-fx-background-radius: 15;">
             <columns>
                 <TableColumn fx:id="colTitle" text="ATTIVITÀ" prefWidth="250" />
-
+                <TableColumn fx:id="colPriority" text="PRIORITÀ" prefWidth="120.0" />
                 <TableColumn fx:id="colStatus" text="STATO" prefWidth="120" styleClass="col-center"/>
                 <TableColumn fx:id="colEstimated" text="STIMA" prefWidth="100" styleClass="col-center"/>
                 <TableColumn fx:id="colActual" text="EFFETTIVO" prefWidth="100" styleClass="col-center"/>

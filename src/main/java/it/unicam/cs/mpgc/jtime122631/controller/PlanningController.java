@@ -1,32 +1,37 @@
 package it.unicam.cs.mpgc.jtime122631.controller;
 
 import it.unicam.cs.mpgc.jtime122631.model.InfoTask;
+import it.unicam.cs.mpgc.jtime122631.model.TaskPriority;
 import it.unicam.cs.mpgc.jtime122631.service.TaskService;
-
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+
 import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Optional;
 
 public class PlanningController {
 
     @FXML private DatePicker datePicker;
     @FXML private Label totalTimeLabel;
-
     @FXML private TableView<InfoTask> planningTable;
     @FXML private TableColumn<InfoTask, String> colTitle;
     @FXML private TableColumn<InfoTask, String> colStatus;
+    @FXML private TableColumn<InfoTask, TaskPriority> colPriority;
     @FXML private TableColumn<InfoTask, String> colEstimated;
     @FXML private TableColumn<InfoTask, String> colActual;
     @FXML private TableColumn<InfoTask, Void> colActions;
@@ -36,8 +41,48 @@ public class PlanningController {
     @FXML
     public void initialize() {
         colTitle.setCellValueFactory(new PropertyValueFactory<>("title"));
+        if (colPriority != null) {
+            colPriority.setCellValueFactory(new PropertyValueFactory<>("priority"));
+            colPriority.setCellFactory(column -> new TableCell<>() {
+                @Override
+                protected void updateItem(TaskPriority item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setGraphic(null);
+                        setText(null);
+                    } else {
+                        HBox container = new HBox(6);
+                        container.setAlignment(Pos.CENTER_LEFT);
+
+                        Label flagIcon = new Label("⚑");
+                        Label priorityText = new Label(item.name());
+
+                        String color;
+                        switch (item) {
+                            case URGENTE -> color = "#ef4444"; // Rosso
+                            case ALTA    -> color = "#f59e0b"; // Giallo
+                            case NORMALE -> color = "#3b82f6"; // Blu
+                            case BASSA   -> color = "#94a3b8"; // Grigio
+                            default      -> color = "#1e293b";
+                        }
+
+                        flagIcon.setStyle("-fx-text-fill: " + color + "; -fx-font-size: 16px; -fx-font-weight: bold;");
+                        priorityText.setStyle("-fx-text-fill: " + color + "; -fx-font-size: 11px; -fx-font-weight: bold; -fx-text-transform: uppercase;");
+
+                        container.getChildren().addAll(flagIcon, priorityText);
+                        container.setPadding(new Insets(2, 8, 2, 8));
+                        container.setStyle("-fx-background-color: " + color + "15; -fx-background-radius: 4;");
+
+                        setGraphic(container);
+                        setAlignment(Pos.CENTER_LEFT);
+                    }
+                }
+            });
+        }
+
         colStatus.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getStatus().name()));
         setupStatusBadge();
+
         colEstimated.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getEstimatedDuration().toMinutes() + " min"));
         colActual.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getActualDuration().toMinutes() + " min"));
         colTitle.getStyleClass().add("col-left");
@@ -61,9 +106,13 @@ public class PlanningController {
     private void loadDailyTasks(LocalDate date) {
         if (taskService == null) return;
 
-        var tasks = taskService.getDailyPlan(date);
-        planningTable.setItems(FXCollections.observableArrayList(new ArrayList<>(tasks)));
+        var tasks = new ArrayList<>(taskService.getDailyPlan(date));
+        tasks.sort(Comparator.comparing(InfoTask::getPriority));
+        planningTable.setItems(FXCollections.observableArrayList(tasks));
+        updateSummaryLabel(tasks);
+    }
 
+    private void updateSummaryLabel(ArrayList<InfoTask> tasks) {
         long remainingMinutes = tasks.stream()
                 .filter(t -> !"COMPLETED".equals(t.getStatus().toString()))
                 .mapToLong(t -> t.getEstimatedDuration().toMinutes())
@@ -77,14 +126,9 @@ public class PlanningController {
             totalTimeLabel.setStyle("-fx-text-fill: #15803d; -fx-font-size: 14px; -fx-font-weight: bold;");
         } else {
             totalTimeLabel.setText(String.format("Da completare: %dh %dm", hours, minutes));
-
-            if (hours < 1) {
-                totalTimeLabel.setStyle("-fx-text-fill: #15803d; -fx-font-size: 14px; -fx-font-weight: bold;");
-            } else if (hours >= 8) {
-                totalTimeLabel.setStyle("-fx-text-fill: #ef4444; -fx-font-size: 14px; -fx-font-weight: bold;");
-            } else {
-                totalTimeLabel.setStyle("-fx-text-fill: #d97706; -fx-font-size: 14px; -fx-font-weight: bold;");
-            }
+            if (hours < 1) totalTimeLabel.setStyle("-fx-text-fill: #15803d; -fx-font-size: 14px; -fx-font-weight: bold;");
+            else if (hours >= 8) totalTimeLabel.setStyle("-fx-text-fill: #ef4444; -fx-font-size: 14px; -fx-font-weight: bold;");
+            else totalTimeLabel.setStyle("-fx-text-fill: #d97706; -fx-font-size: 14px; -fx-font-weight: bold;");
         }
     }
 
@@ -102,26 +146,24 @@ public class PlanningController {
 
     private void setupActions() {
         colActions.setCellFactory(param -> new TableCell<>() {
-            private final Button btnComplete = new Button("COMPLETA");
-            private final Button btnMove = new Button("SPOSTA");
-            private final Button btnEdit = new Button("MODIFICA");
-            private final Button btnDelete = new Button("ELIMINA");
+            private final Button btnComplete = new Button("✔");
+            private final Button btnMove = new Button("➜");
+            private final Button btnEdit = new Button("✎");
+            private final Button btnDelete = new Button("✖");
 
-            private final HBox pane = new HBox(8, btnComplete, btnMove, btnEdit, btnDelete);
+            private final HBox pane = new HBox(5, btnComplete, btnMove, btnEdit, btnDelete);
 
             {
-                btnComplete.getStyleClass().addAll("table-action-button", "complete-button");
+                String baseStyle = "-fx-background-color: transparent; -fx-border-radius: 3; -fx-cursor: hand; -fx-font-size: 14px; -fx-font-weight: bold;";
+                btnComplete.setStyle(baseStyle + "-fx-text-fill: green;");
+                btnMove.setStyle(baseStyle + "-fx-text-fill: #6366f1;");
+                btnEdit.setStyle(baseStyle + "-fx-text-fill: #3b82f6;");
+                btnDelete.setStyle(baseStyle + "-fx-text-fill: red;");
+
                 btnComplete.setOnAction(e -> handleComplete(getTableView().getItems().get(getIndex())));
-
-                btnMove.getStyleClass().addAll("table-action-button", "open-button");
                 btnMove.setOnAction(e -> handleMove(getTableView().getItems().get(getIndex())));
-
-                btnEdit.getStyleClass().addAll("table-action-button", "edit-button");
                 btnEdit.setOnAction(e -> handleEdit(getTableView().getItems().get(getIndex())));
-
-                btnDelete.getStyleClass().addAll("table-action-button", "delete-button");
                 btnDelete.setOnAction(e -> handleDelete(getTableView().getItems().get(getIndex())));
-
                 pane.setAlignment(Pos.CENTER);
             }
 
@@ -132,18 +174,16 @@ public class PlanningController {
                     setGraphic(null);
                 } else {
                     InfoTask t = getTableView().getItems().get(getIndex());
-                    if (t != null && "PENDING".equals(t.getStatus().toString())) {
-                        pane.getChildren().setAll(btnComplete, btnMove, btnEdit, btnDelete);
+                    if (t != null) {
+                        if ("PENDING".equals(t.getStatus().toString())) {
+                            pane.getChildren().setAll(btnComplete, btnMove, btnEdit, btnDelete);
+                        } else {
+                            pane.getChildren().setAll(btnDelete);
+                        }
                         setGraphic(pane);
                         setAlignment(Pos.CENTER);
                     } else {
-                        if (t != null) {
-                            pane.getChildren().setAll(btnDelete);
-                            setGraphic(pane);
-                            setAlignment(Pos.CENTER);
-                        } else {
-                            setGraphic(null);
-                        }
+                        setGraphic(null);
                     }
                 }
             }
@@ -157,6 +197,7 @@ public class PlanningController {
                 super.updateItem(item, empty);
                 if (empty || item == null) {
                     setGraphic(null);
+                    setText(null);
                 } else {
                     Label badge = new Label(item);
                     String style = "-fx-font-weight: bold; -fx-padding: 5 10; -fx-background-radius: 12;";
@@ -174,7 +215,7 @@ public class PlanningController {
     private void handleComplete(InfoTask task) {
         TextInputDialog dialog = new TextInputDialog(String.valueOf(task.getEstimatedDuration().toMinutes()));
         dialog.setTitle("Completa");
-        dialog.setHeaderText("Minuti effettivi?");
+        dialog.setHeaderText("Minuti effettivi impiegati?");
         Optional<String> result = dialog.showAndWait();
 
         result.ifPresent(minStr -> {
@@ -188,23 +229,29 @@ public class PlanningController {
 
     private void handleEdit(InfoTask task) {
         try {
-            javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource("/it/unicam/cs/mpgc/jtime122631/controller/TaskDialog.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/it/unicam/cs/mpgc/jtime122631/controller/TaskDialog.fxml"));
             VBox page = loader.load();
 
             Stage dialogStage = new Stage();
             dialogStage.setTitle("Modifica Attività");
             dialogStage.initModality(Modality.WINDOW_MODAL);
             dialogStage.initOwner(planningTable.getScene().getWindow());
-            dialogStage.setScene(new javafx.scene.Scene(page));
+            dialogStage.setScene(new Scene(page));
 
             TaskDialogController controller = loader.getController();
             controller.setDialogStage(dialogStage);
-            controller.setTaskData(task.getTitle(), task.getEstimatedDuration(), task.getScheduledDate());
+            controller.setTaskData(task.getTitle(), task.getEstimatedDuration(), task.getScheduledDate(), task.getPriority());
 
             dialogStage.showAndWait();
 
             if (controller.isSaveClicked()) {
-                taskService.updateTask(task.getId(), controller.getTitle(), controller.getScheduledDate(), controller.getEstimatedDuration());
+                taskService.updateTask(
+                        task.getId(),
+                        controller.getTitle(),
+                        controller.getScheduledDate(),
+                        controller.getEstimatedDuration(),
+                        controller.getPriority()
+                );
                 loadDailyTasks(datePicker.getValue());
             }
         } catch (IOException e) {
@@ -235,13 +282,11 @@ public class PlanningController {
 
         DatePicker datePickerDlg = new DatePicker(task.getScheduledDate());
         VBox content = new VBox(10, new Label("Nuova data:"), datePickerDlg);
-        content.setPadding(new javafx.geometry.Insets(20));
+        content.setPadding(new Insets(20));
         dialog.getDialogPane().setContent(content);
 
         dialog.setResultConverter(dialogButton -> {
-            if (dialogButton == saveButtonType) {
-                return datePickerDlg.getValue();
-            }
+            if (dialogButton == saveButtonType) return datePickerDlg.getValue();
             return null;
         });
 

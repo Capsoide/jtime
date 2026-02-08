@@ -31,6 +31,7 @@ public class DatabaseManager {
                 project_id INT NOT NULL,
                 title VARCHAR(255) NOT NULL,
                 status VARCHAR(50) NOT NULL,
+                priority VARCHAR(20) DEFAULT 'NORMALE',
                 estimated_minutes BIGINT DEFAULT 0,
                 actual_minutes BIGINT DEFAULT 0,
                 scheduled_date DATE,

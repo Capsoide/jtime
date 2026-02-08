@@ -23,7 +23,7 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    public void createTask(int projectId, String title, LocalDate scheduledDate, Duration estimated) {
+    public void createTask(int projectId, String title, LocalDate scheduledDate, Duration estimated, TaskPriority priority) {
         Project project = projectRepository.findById(projectId);
         if (project == null) {
             throw new JTimeException("Progetto non trovato.");
@@ -31,21 +31,25 @@ public class TaskServiceImpl implements TaskService {
         if (project.getStatus() == ProjectStatus.COMPLETED) {
             throw new JTimeException("Non puoi aggiungere attività a un progetto chiuso.");
         }
+        TaskPriority safePriority = (priority != null) ? priority : TaskPriority.NORMALE;
 
-        Task newTask = new Task(0, projectId, title, TaskStatus.PENDING, estimated, Duration.ZERO, scheduledDate);
+        Task newTask = new Task(0, projectId, title, TaskStatus.PENDING, safePriority, estimated, Duration.ZERO, scheduledDate);
         taskRepository.save(newTask);
     }
 
     @Override
-    public void updateTask(int id, String title, LocalDate scheduledDate, Duration estimated) {
+    public void updateTask(int id, String title, LocalDate scheduledDate, Duration estimated, TaskPriority priority) {
         Task existing = taskRepository.findById(id);
         if (existing == null) throw new JTimeException("Task non trovato.");
+
+        TaskPriority safePriority = (priority != null) ? priority : TaskPriority.NORMALE;
 
         Task updatedTask = new Task(
                 existing.getId(),
                 existing.getProjectId(),
                 title,
                 existing.getStatus(),
+                safePriority,
                 estimated != null ? estimated : Duration.ZERO,
                 existing.getActualDuration(),
                 scheduledDate
@@ -64,6 +68,7 @@ public class TaskServiceImpl implements TaskService {
                 existingTask.getProjectId(),
                 existingTask.getTitle(),
                 TaskStatus.COMPLETED,
+                existingTask.getPriority(),
                 existingTask.getEstimatedDuration(),
                 actualDuration,
                 existingTask.getScheduledDate()

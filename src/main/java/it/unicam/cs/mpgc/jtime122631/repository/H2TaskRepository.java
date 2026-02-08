@@ -3,6 +3,7 @@ package it.unicam.cs.mpgc.jtime122631.repository;
 import it.unicam.cs.mpgc.jtime122631.infrastructure.DatabaseManager;
 import it.unicam.cs.mpgc.jtime122631.model.Task;
 import it.unicam.cs.mpgc.jtime122631.model.TaskStatus;
+import it.unicam.cs.mpgc.jtime122631.model.TaskPriority; // <--- 1. IMPORT NECESSARIO
 
 import java.sql.*;
 import java.time.Duration;
@@ -17,10 +18,11 @@ public class H2TaskRepository implements TaskRepository {
         String sql;
         boolean isUpdate = task.getId() > 0;
 
+        // 2. AGGIORNATE LE QUERY SQL PER INCLUDERE 'priority'
         if (isUpdate) {
-            sql = "UPDATE task SET title=?, status=?, estimated_minutes=?, actual_minutes=?, scheduled_date=? WHERE id=?";
+            sql = "UPDATE task SET title=?, status=?, priority=?, estimated_minutes=?, actual_minutes=?, scheduled_date=? WHERE id=?";
         } else {
-            sql = "INSERT INTO task (project_id, title, status, estimated_minutes, actual_minutes, scheduled_date) VALUES (?, ?, ?, ?, ?, ?)";
+            sql = "INSERT INTO task (project_id, title, status, priority, estimated_minutes, actual_minutes, scheduled_date) VALUES (?, ?, ?, ?, ?, ?, ?)";
         }
 
         try (Connection conn = DatabaseManager.getConnection();
@@ -31,6 +33,15 @@ public class H2TaskRepository implements TaskRepository {
 
             stmt.setString(i++, task.getTitle());
             stmt.setString(i++, task.getStatus().name());
+
+            // 3. SALVATAGGIO DELLA PRIORITÀ
+            // Se per caso è null, salviamo "NORMALE" per evitare errori
+            if (task.getPriority() != null) {
+                stmt.setString(i++, task.getPriority().name());
+            } else {
+                stmt.setString(i++, TaskPriority.NORMALE.name());
+            }
+
             stmt.setLong(i++, task.getEstimatedDuration().toMinutes());
             stmt.setLong(i++, task.getActualDuration().toMinutes());
 
@@ -48,11 +59,13 @@ public class H2TaskRepository implements TaskRepository {
                 stmt.executeUpdate();
                 try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
                     if (generatedKeys.next()) {
+                        // Restituisce il nuovo oggetto task
                         return new Task(
                                 generatedKeys.getInt(1),
                                 task.getProjectId(),
                                 task.getTitle(),
                                 task.getStatus(),
+                                task.getPriority(), // <--- Passiamo la priorità al costruttore
                                 task.getEstimatedDuration(),
                                 task.getActualDuration(),
                                 task.getScheduledDate()
@@ -134,15 +147,21 @@ public class H2TaskRepository implements TaskRepository {
         return list;
     }
 
+    // 4. METODO MAPROW AGGIORNATO
     private Task mapRow(ResultSet rs) throws SQLException {
         Date sqlDate = rs.getDate("scheduled_date");
         LocalDate localDate = (sqlDate != null) ? sqlDate.toLocalDate() : null;
+
+        // Recuperiamo la stringa della priorità e gestiamo eventuali null
+        String priorityStr = rs.getString("priority");
+        TaskPriority priority = (priorityStr != null) ? TaskPriority.valueOf(priorityStr) : TaskPriority.NORMALE;
 
         return new Task(
                 rs.getInt("id"),
                 rs.getInt("project_id"),
                 rs.getString("title"),
                 TaskStatus.valueOf(rs.getString("status")),
+                priority, // <--- INSERITA LA PRIORITÀ QUI
                 Duration.ofMinutes(rs.getLong("estimated_minutes")),
                 Duration.ofMinutes(rs.getLong("actual_minutes")),
                 localDate

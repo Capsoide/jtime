@@ -2,17 +2,22 @@ package it.unicam.cs.mpgc.jtime122631.controller;
 
 import it.unicam.cs.mpgc.jtime122631.model.InfoProject;
 import it.unicam.cs.mpgc.jtime122631.model.InfoTask;
+import it.unicam.cs.mpgc.jtime122631.model.TaskPriority;
 import it.unicam.cs.mpgc.jtime122631.service.TaskService;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Callback;
-import javafx.geometry.Pos;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -27,6 +32,8 @@ public class ProjectDetailsController {
     @FXML private TableView<InfoTask> tasksTable;
     @FXML private TableColumn<InfoTask, String> colTitle;
     @FXML private TableColumn<InfoTask, String> colStatus;
+    @FXML private TableColumn<InfoTask, TaskPriority> colPriority;
+
     @FXML private TableColumn<InfoTask, String> colEstimated;
     @FXML private TableColumn<InfoTask, String> colActual;
     @FXML private TableColumn<InfoTask, String> colDate;
@@ -39,19 +46,68 @@ public class ProjectDetailsController {
     @FXML
     public void initialize() {
         colTitle.setCellValueFactory(new PropertyValueFactory<>("title"));
-        colTitle.getStyleClass().add("col-center");
-        colStatus.getStyleClass().add("col-center");
-        colEstimated.getStyleClass().add("col-center");
-        colActual.getStyleClass().add("col-center");
-        colDate.getStyleClass().add("col-center");
-        colActions.getStyleClass().add("col-center");
+        colTitle.setCellFactory(column -> new TableCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(item);
+                    setAlignment(Pos.CENTER_LEFT);
+                    setPadding(new Insets(0, 0, 0, 10));
+                }
+            }
+        });
+
+        if (colPriority != null) {
+            colPriority.setCellValueFactory(new PropertyValueFactory<>("priority"));
+            colPriority.setCellFactory(column -> new TableCell<>() {
+                @Override
+                protected void updateItem(TaskPriority item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setGraphic(null);
+                        setText(null);
+                    } else {
+                        HBox container = new HBox(6);
+                        container.setAlignment(Pos.CENTER);
+
+                        Label flagIcon = new Label("⚑");
+                        Label priorityText = new Label(item.name());
+
+                        String color;
+                        switch (item) {
+                            case URGENTE -> color = "#ef4444";
+                            case ALTA    -> color = "#f59e0b";
+                            case NORMALE -> color = "#3b82f6";
+                            case BASSA   -> color = "#94a3b8";
+                            default      -> color = "#1e293b";
+                        }
+
+                        flagIcon.setStyle("-fx-text-fill: " + color + "; -fx-font-size: 15px; -fx-font-weight: bold;");
+                        priorityText.setStyle("-fx-text-fill: " + color + "; -fx-font-size: 10px; -fx-font-weight: bold; -fx-text-transform: uppercase;");
+                        container.getChildren().addAll(flagIcon, priorityText);
+                        container.setPadding(new Insets(3, 10, 3, 10));
+                        container.setStyle("-fx-background-color: " + color + "15; -fx-background-radius: 4;");
+                        setGraphic(container);
+                        setAlignment(Pos.CENTER);
+                    }
+                }
+            });
+        }
+
         colStatus.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getStatus().name()));
         setupStatusBadge();
-        setupCenterColumn(colEstimated, task -> task.getEstimatedDuration().toMinutes() + " min");
-        setupCenterColumn(colActual, task -> task.getActualDuration().toMinutes() + " min");
+        setupCenterColumn(colEstimated, task -> formatDuration(task.getEstimatedDuration()));
+        setupCenterColumn(colActual, task -> formatDuration(task.getActualDuration()));
         setupCenterColumn(colDate, task -> task.getScheduledDate() != null ? task.getScheduledDate().toString() : "-");
-
         setupTaskActions();
+    }
+
+    private String formatDuration(Duration d) {
+        if (d == null) return "0 min";
+        return d.toMinutes() + " min";
     }
 
     private void setupCenterColumn(TableColumn<InfoTask, String> column, Callback<InfoTask, String> mapper) {
@@ -71,13 +127,17 @@ public class ProjectDetailsController {
         });
     }
 
-    public void initData(InfoProject project, TaskService tService, MainController mController) {
+    public void setServices(InfoProject project, TaskService tService, MainController mController) {
         this.currentProject = project;
         this.taskService = tService;
         this.mainController = mController;
         projectNameLabel.setText(project.getName());
         projectDescLabel.setText(project.getDescription());
         refreshTable();
+    }
+
+    public void initData(InfoProject project, TaskService tService, MainController mController) {
+        setServices(project, tService, mController);
     }
 
     private void refreshTable() {
@@ -88,64 +148,63 @@ public class ProjectDetailsController {
         }
     }
 
-    private void setupTaskActions() {
-        Callback<TableColumn<InfoTask, Void>, TableCell<InfoTask, Void>> cellFactory = param -> new TableCell<>() {
-            private final Button btnComplete = new Button("COMPLETA");
-            private final Button btnEdit = new Button("MODIFICA");
-            private final Button btnDelete = new Button("ELIMINA");
-            private final HBox pane = new HBox(8, btnComplete, btnEdit, btnDelete);
+    @FXML
+    public void handleAddTask() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/it/unicam/cs/mpgc/jtime122631/controller/TaskDialog.fxml"));
+            VBox page = loader.load();
 
-            {
-                btnComplete.getStyleClass().addAll("table-action-button", "complete-button");
-                btnEdit.getStyleClass().addAll("table-action-button", "edit-button");
-                btnDelete.getStyleClass().addAll("table-action-button", "delete-button");
-                pane.setAlignment(Pos.CENTER);
-                btnComplete.setOnAction(e -> handleCompleteTask(getTableView().getItems().get(getIndex())));
-                btnEdit.setOnAction(e -> handleEditTask(getTableView().getItems().get(getIndex())));
-                btnDelete.setOnAction(e -> handleDeleteTask(getTableView().getItems().get(getIndex())));
-            }
+            Stage dialogStage = new Stage();
+            dialogStage.setTitle("Nuova Attività");
+            dialogStage.initModality(Modality.WINDOW_MODAL);
+            dialogStage.initOwner(tasksTable.getScene().getWindow());
+            dialogStage.setScene(new Scene(page));
 
-            @Override
-            protected void updateItem(Void item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty) {
-                    setGraphic(null);
-                } else {
-                    InfoTask task = getTableView().getItems().get(getIndex());
-                    if (task != null) {
-                        if ("PENDING".equals(task.getStatus().toString())) {
-                            pane.getChildren().setAll(btnComplete, btnEdit, btnDelete);
-                        } else {
-                            pane.getChildren().setAll(btnDelete);
-                        }
-                        setGraphic(pane);
-                        setAlignment(Pos.CENTER);
-                    }
-                }
+            TaskDialogController controller = loader.getController();
+            controller.setDialogStage(dialogStage);
+
+            dialogStage.showAndWait();
+
+            if (controller.isSaveClicked()) {
+                taskService.createTask(
+                        currentProject.getId(),
+                        controller.getTitle(),
+                        controller.getScheduledDate(),
+                        controller.getEstimatedDuration(),
+                        controller.getPriority()
+                );
+                refreshTable();
             }
-        };
-        colActions.setCellFactory(cellFactory);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private void handleEditTask(InfoTask task) {
         try {
-            javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource("/it/unicam/cs/mpgc/jtime122631/controller/TaskDialog.fxml"));
-            javafx.scene.layout.VBox page = loader.load();
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/it/unicam/cs/mpgc/jtime122631/controller/TaskDialog.fxml"));
+            VBox page = loader.load();
 
             Stage dialogStage = new Stage();
             dialogStage.setTitle("Modifica Attività");
             dialogStage.initModality(Modality.WINDOW_MODAL);
             dialogStage.initOwner(tasksTable.getScene().getWindow());
-            dialogStage.setScene(new javafx.scene.Scene(page));
+            dialogStage.setScene(new Scene(page));
 
             TaskDialogController controller = loader.getController();
             controller.setDialogStage(dialogStage);
-            controller.setTaskData(task.getTitle(), task.getEstimatedDuration(), task.getScheduledDate());
+            controller.setTaskData(task.getTitle(), task.getEstimatedDuration(), task.getScheduledDate(), task.getPriority());
 
             dialogStage.showAndWait();
 
             if (controller.isSaveClicked()) {
-                taskService.updateTask(task.getId(), controller.getTitle(), controller.getScheduledDate(), controller.getEstimatedDuration());
+                taskService.updateTask(
+                        task.getId(),
+                        controller.getTitle(),
+                        controller.getScheduledDate(),
+                        controller.getEstimatedDuration(),
+                        controller.getPriority()
+                );
                 refreshTable();
             }
         } catch (IOException e) {
@@ -186,32 +245,8 @@ public class ProjectDetailsController {
 
     @FXML
     public void handleBack() {
-        mainController.showProjects();
-    }
-
-    @FXML
-    public void handleAddTask() {
-        try {
-            javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource("/it/unicam/cs/mpgc/jtime122631/controller/TaskDialog.fxml"));
-            javafx.scene.layout.VBox page = loader.load();
-
-            Stage dialogStage = new Stage();
-            dialogStage.setTitle("Nuova Attività");
-            dialogStage.initModality(Modality.WINDOW_MODAL);
-            dialogStage.initOwner(tasksTable.getScene().getWindow());
-            dialogStage.setScene(new javafx.scene.Scene(page));
-
-            TaskDialogController controller = loader.getController();
-            controller.setDialogStage(dialogStage);
-
-            dialogStage.showAndWait();
-
-            if (controller.isSaveClicked()) {
-                taskService.createTask(currentProject.getId(), controller.getTitle(), controller.getScheduledDate(), controller.getEstimatedDuration());
-                refreshTable();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+        if (mainController != null) {
+            mainController.showProjects();
         }
     }
 
@@ -232,6 +267,46 @@ public class ProjectDetailsController {
                     badge.setAlignment(Pos.CENTER);
                     setGraphic(badge);
                     setAlignment(Pos.CENTER);
+                }
+            }
+        });
+    }
+
+    private void setupTaskActions() {
+        colActions.setCellFactory(param -> new TableCell<>() {
+            private final Button btnComplete = new Button("COMPLETA");
+            private final Button btnEdit = new Button("MODIFICA");
+            private final Button btnDelete = new Button("ELIMINA");
+            private final HBox pane = new HBox(8, btnComplete, btnEdit, btnDelete);
+
+            {
+                // Ripristino classi CSS originali
+                btnComplete.getStyleClass().addAll("table-action-button", "complete-button");
+                btnEdit.getStyleClass().addAll("table-action-button", "edit-button");
+                btnDelete.getStyleClass().addAll("table-action-button", "delete-button");
+
+                pane.setAlignment(Pos.CENTER);
+                btnComplete.setOnAction(e -> handleCompleteTask(getTableView().getItems().get(getIndex())));
+                btnEdit.setOnAction(e -> handleEditTask(getTableView().getItems().get(getIndex())));
+                btnDelete.setOnAction(e -> handleDeleteTask(getTableView().getItems().get(getIndex())));
+            }
+
+            @Override
+            protected void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) {
+                    setGraphic(null);
+                } else {
+                    InfoTask task = getTableView().getItems().get(getIndex());
+                    if (task != null) {
+                        if ("PENDING".equals(task.getStatus().toString())) {
+                            pane.getChildren().setAll(btnComplete, btnEdit, btnDelete);
+                        } else {
+                            pane.getChildren().setAll(btnDelete);
+                        }
+                        setGraphic(pane);
+                        setAlignment(Pos.CENTER);
+                    }
                 }
             }
         });

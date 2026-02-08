@@ -8,6 +8,7 @@ public interface InfoTask {
     int getProjectId();
     String getTitle();
     TaskStatus getStatus();
+    TaskPriority getPriority();
 
     Duration getEstimatedDuration();
     Duration getActualDuration();

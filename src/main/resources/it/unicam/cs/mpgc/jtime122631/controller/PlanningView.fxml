@@ -38,6 +38,7 @@
             <columns>
                 <TableColumn fx:id="colTitle" text="ATTIVITÀ" prefWidth="100" style="-fx-alignment: CENTER_LEFT;"/>
                 <TableColumn fx:id="colStatus" text="STATO" prefWidth="100" styleClass="col-center"/>
+                <TableColumn fx:id="colPriority" text="Priorità" prefWidth="120.0" />
                 <TableColumn fx:id="colEstimated" text="STIMA" prefWidth="100" styleClass="col-center"/>
                 <TableColumn fx:id="colActual" text="EFFETTIVO" prefWidth="100" styleClass="col-center"/>
                 <TableColumn fx:id="colActions" text="AZIONI" prefWidth="100" styleClass="col-center" sortable="false"/>

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.DatePicker?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TextField?>
@@ -17,6 +18,11 @@
     <VBox spacing="10">
         <Label text="Titolo Attività *" style="-fx-font-weight: bold; -fx-text-fill: #64748b;"/>
         <TextField fx:id="titleField" promptText="Es. Disegnare Mockup" />
+    </VBox>
+
+    <VBox spacing="10">
+        <Label text="Priorità" style="-fx-font-weight: bold; -fx-text-fill: #64748b;"/>
+        <ComboBox  fx:id="priorityCombo" promptText="Seleziona priorità" maxWidth="Infinity"/>
     </VBox>
 
     <HBox spacing="20">
