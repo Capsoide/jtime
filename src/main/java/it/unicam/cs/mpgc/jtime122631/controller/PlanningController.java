@@ -16,6 +16,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.util.Callback;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -40,7 +41,22 @@ public class PlanningController {
 
     @FXML
     public void initialize() {
+        // 1. Allineamento Titolo (Sinistra con Padding)
         colTitle.setCellValueFactory(new PropertyValueFactory<>("title"));
+        colTitle.setCellFactory(column -> new TableCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) setText(null);
+                else {
+                    setText(item);
+                    setAlignment(Pos.CENTER_LEFT);
+                    setPadding(new Insets(0, 0, 0, 10));
+                }
+            }
+        });
+
+        // 2. Priorità (Badge Centrato)
         if (colPriority != null) {
             colPriority.setCellValueFactory(new PropertyValueFactory<>("priority"));
             colPriority.setCellFactory(column -> new TableCell<>() {
@@ -52,49 +68,63 @@ public class PlanningController {
                         setText(null);
                     } else {
                         HBox container = new HBox(6);
-                        container.setAlignment(Pos.CENTER_LEFT);
+                        container.setAlignment(Pos.CENTER); // Centra contenuto nel badge
 
                         Label flagIcon = new Label("⚑");
                         Label priorityText = new Label(item.name());
 
                         String color;
                         switch (item) {
-                            case URGENTE -> color = "#ef4444"; // Rosso
-                            case ALTA    -> color = "#f59e0b"; // Giallo
-                            case NORMALE -> color = "#3b82f6"; // Blu
-                            case BASSA   -> color = "#94a3b8"; // Grigio
+                            case URGENTE -> color = "#ef4444";
+                            case ALTA    -> color = "#f59e0b";
+                            case NORMALE -> color = "#3b82f6";
+                            case BASSA   -> color = "#94a3b8";
                             default      -> color = "#1e293b";
                         }
 
-                        flagIcon.setStyle("-fx-text-fill: " + color + "; -fx-font-size: 16px; -fx-font-weight: bold;");
-                        priorityText.setStyle("-fx-text-fill: " + color + "; -fx-font-size: 11px; -fx-font-weight: bold; -fx-text-transform: uppercase;");
+                        flagIcon.setStyle("-fx-text-fill: " + color + "; -fx-font-size: 15px; -fx-font-weight: bold;");
+                        priorityText.setStyle("-fx-text-fill: " + color + "; -fx-font-size: 10px; -fx-font-weight: bold; -fx-text-transform: uppercase;");
 
                         container.getChildren().addAll(flagIcon, priorityText);
-                        container.setPadding(new Insets(2, 8, 2, 8));
+                        container.setPadding(new Insets(3, 10, 3, 10));
                         container.setStyle("-fx-background-color: " + color + "15; -fx-background-radius: 4;");
 
                         setGraphic(container);
-                        setAlignment(Pos.CENTER_LEFT);
+                        setAlignment(Pos.CENTER); // Centra il badge nella cella
                     }
                 }
             });
         }
 
+        // 3. Stato (Badge Centrato)
         colStatus.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getStatus().name()));
         setupStatusBadge();
 
-        colEstimated.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getEstimatedDuration().toMinutes() + " min"));
-        colActual.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getActualDuration().toMinutes() + " min"));
-        colTitle.getStyleClass().add("col-left");
-        colStatus.getStyleClass().add("col-center");
-        colEstimated.getStyleClass().add("col-center");
-        colActual.getStyleClass().add("col-center");
-        colActions.getStyleClass().add("col-center");
+        // 4. Colonne Dati (Centrate)
+        setupCenterColumn(colEstimated, task -> task.getEstimatedDuration().toMinutes() + " min");
+        setupCenterColumn(colActual, task -> task.getActualDuration().toMinutes() + " min");
 
+        // 5. Azioni (Bottoni Testuali e Centrati)
         setupActions();
 
         datePicker.valueProperty().addListener((obs, oldDate, newDate) -> {
             if (newDate != null) loadDailyTasks(newDate);
+        });
+    }
+
+    private void setupCenterColumn(TableColumn<InfoTask, String> column, Callback<InfoTask, String> mapper) {
+        column.setCellValueFactory(data -> new SimpleStringProperty(mapper.call(data.getValue())));
+        column.setCellFactory(col -> new TableCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(item);
+                    setAlignment(Pos.CENTER);
+                }
+            }
         });
     }
 
@@ -105,7 +135,6 @@ public class PlanningController {
 
     private void loadDailyTasks(LocalDate date) {
         if (taskService == null) return;
-
         var tasks = new ArrayList<>(taskService.getDailyPlan(date));
         tasks.sort(Comparator.comparing(InfoTask::getPriority));
         planningTable.setItems(FXCollections.observableArrayList(tasks));
@@ -126,45 +155,30 @@ public class PlanningController {
             totalTimeLabel.setStyle("-fx-text-fill: #15803d; -fx-font-size: 14px; -fx-font-weight: bold;");
         } else {
             totalTimeLabel.setText(String.format("Da completare: %dh %dm", hours, minutes));
-            if (hours < 1) totalTimeLabel.setStyle("-fx-text-fill: #15803d; -fx-font-size: 14px; -fx-font-weight: bold;");
-            else if (hours >= 8) totalTimeLabel.setStyle("-fx-text-fill: #ef4444; -fx-font-size: 14px; -fx-font-weight: bold;");
-            else totalTimeLabel.setStyle("-fx-text-fill: #d97706; -fx-font-size: 14px; -fx-font-weight: bold;");
+            totalTimeLabel.setStyle("-fx-text-fill: " + (hours >= 8 ? "#ef4444" : "#d97706") + "; -fx-font-size: 14px; -fx-font-weight: bold;");
         }
-    }
-
-    @FXML private void handlePrevDay() {
-        datePicker.setValue(datePicker.getValue().minusDays(1));
-    }
-
-    @FXML private void handleNextDay() {
-        datePicker.setValue(datePicker.getValue().plusDays(1));
-    }
-
-    @FXML private void handleToday() {
-        datePicker.setValue(LocalDate.now());
     }
 
     private void setupActions() {
         colActions.setCellFactory(param -> new TableCell<>() {
-            private final Button btnComplete = new Button("✔");
-            private final Button btnMove = new Button("➜");
-            private final Button btnEdit = new Button("✎");
-            private final Button btnDelete = new Button("✖");
-
-            private final HBox pane = new HBox(5, btnComplete, btnMove, btnEdit, btnDelete);
+            private final Button btnComplete = new Button("COMPLETA");
+            private final Button btnMove = new Button("SPOSTA");
+            private final Button btnEdit = new Button("MODIFICA");
+            private final Button btnDelete = new Button("ELIMINA");
+            private final HBox pane = new HBox(8, btnComplete, btnMove, btnEdit, btnDelete);
 
             {
-                String baseStyle = "-fx-background-color: transparent; -fx-border-radius: 3; -fx-cursor: hand; -fx-font-size: 14px; -fx-font-weight: bold;";
-                btnComplete.setStyle(baseStyle + "-fx-text-fill: green;");
-                btnMove.setStyle(baseStyle + "-fx-text-fill: #6366f1;");
-                btnEdit.setStyle(baseStyle + "-fx-text-fill: #3b82f6;");
-                btnDelete.setStyle(baseStyle + "-fx-text-fill: red;");
+                btnComplete.getStyleClass().addAll("table-action-button", "complete-button");
+                btnMove.getStyleClass().addAll("table-action-button", "open-button"); // Usiamo open-button per coerenza colore
+                btnEdit.getStyleClass().addAll("table-action-button", "edit-button");
+                btnDelete.getStyleClass().addAll("table-action-button", "delete-button");
+
+                pane.setAlignment(Pos.CENTER);
 
                 btnComplete.setOnAction(e -> handleComplete(getTableView().getItems().get(getIndex())));
                 btnMove.setOnAction(e -> handleMove(getTableView().getItems().get(getIndex())));
                 btnEdit.setOnAction(e -> handleEdit(getTableView().getItems().get(getIndex())));
                 btnDelete.setOnAction(e -> handleDelete(getTableView().getItems().get(getIndex())));
-                pane.setAlignment(Pos.CENTER);
             }
 
             @Override
@@ -182,8 +196,6 @@ public class PlanningController {
                         }
                         setGraphic(pane);
                         setAlignment(Pos.CENTER);
-                    } else {
-                        setGraphic(null);
                     }
                 }
             }
@@ -197,7 +209,6 @@ public class PlanningController {
                 super.updateItem(item, empty);
                 if (empty || item == null) {
                     setGraphic(null);
-                    setText(null);
                 } else {
                     Label badge = new Label(item);
                     String style = "-fx-font-weight: bold; -fx-padding: 5 10; -fx-background-radius: 12;";
@@ -222,8 +233,7 @@ public class PlanningController {
             try {
                 taskService.completeTask(task.getId(), Duration.ofMinutes(Long.parseLong(minStr)));
                 loadDailyTasks(datePicker.getValue());
-            } catch (Exception e) {
-            }
+            } catch (Exception e) {}
         });
     }
 
@@ -231,7 +241,6 @@ public class PlanningController {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/it/unicam/cs/mpgc/jtime122631/controller/TaskDialog.fxml"));
             VBox page = loader.load();
-
             Stage dialogStage = new Stage();
             dialogStage.setTitle("Modifica Attività");
             dialogStage.initModality(Modality.WINDOW_MODAL);
@@ -243,62 +252,39 @@ public class PlanningController {
             controller.setTaskData(task.getTitle(), task.getEstimatedDuration(), task.getScheduledDate(), task.getPriority());
 
             dialogStage.showAndWait();
-
             if (controller.isSaveClicked()) {
-                taskService.updateTask(
-                        task.getId(),
-                        controller.getTitle(),
-                        controller.getScheduledDate(),
-                        controller.getEstimatedDuration(),
-                        controller.getPriority()
-                );
+                taskService.updateTask(task.getId(), controller.getTitle(), controller.getScheduledDate(), controller.getEstimatedDuration(), controller.getPriority());
                 loadDailyTasks(datePicker.getValue());
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        } catch (IOException e) { e.printStackTrace(); }
     }
 
     private void handleDelete(InfoTask task) {
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-        alert.setTitle("Elimina Attività");
-        alert.setHeaderText("Eliminare definitivamente '" + task.getTitle() + "'?");
-        alert.setContentText("L'operazione non può essere annullata.");
-
-        Optional<ButtonType> result = alert.showAndWait();
-        if (result.isPresent() && result.get() == ButtonType.OK) {
-            taskService.deleteTask(task.getId());
-            loadDailyTasks(datePicker.getValue());
-        }
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "Eliminare definitivamente '" + task.getTitle() + "'?");
+        alert.showAndWait().ifPresent(btn -> {
+            if (btn == ButtonType.OK) {
+                taskService.deleteTask(task.getId());
+                loadDailyTasks(datePicker.getValue());
+            }
+        });
     }
 
     private void handleMove(InfoTask task) {
         Dialog<LocalDate> dialog = new Dialog<>();
-        dialog.setTitle("Sposta Attività");
-        dialog.setHeaderText("Sposta '" + task.getTitle() + "' a nuova data:");
-
-        ButtonType saveButtonType = new ButtonType("Sposta", ButtonBar.ButtonData.OK_DONE);
-        dialog.getDialogPane().getButtonTypes().addAll(saveButtonType, ButtonType.CANCEL);
-
-        DatePicker datePickerDlg = new DatePicker(task.getScheduledDate());
-        VBox content = new VBox(10, new Label("Nuova data:"), datePickerDlg);
-        content.setPadding(new Insets(20));
-        dialog.getDialogPane().setContent(content);
-
-        dialog.setResultConverter(dialogButton -> {
-            if (dialogButton == saveButtonType) return datePickerDlg.getValue();
-            return null;
-        });
-
-        Optional<LocalDate> result = dialog.showAndWait();
-        result.ifPresent(newDate -> {
-            try {
-                taskService.rescheduleTask(task.getId(), newDate);
-                loadDailyTasks(datePicker.getValue());
-            } catch (Exception e) {
-                Alert alert = new Alert(Alert.AlertType.ERROR, "Errore spostamento: " + e.getMessage());
-                alert.showAndWait();
-            }
+        dialog.setTitle("Sposta");
+        dialog.setHeaderText("Sposta '" + task.getTitle() + "' a:");
+        ButtonType saveBtn = new ButtonType("Sposta", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(saveBtn, ButtonType.CANCEL);
+        DatePicker dp = new DatePicker(task.getScheduledDate());
+        dialog.getDialogPane().setContent(new VBox(10, new Label("Nuova data:"), dp));
+        dialog.setResultConverter(btn -> btn == saveBtn ? dp.getValue() : null);
+        dialog.showAndWait().ifPresent(newDate -> {
+            taskService.rescheduleTask(task.getId(), newDate);
+            loadDailyTasks(datePicker.getValue());
         });
     }
+
+    @FXML private void handlePrevDay() { datePicker.setValue(datePicker.getValue().minusDays(1)); }
+    @FXML private void handleNextDay() { datePicker.setValue(datePicker.getValue().plusDays(1)); }
+    @FXML private void handleToday() { datePicker.setValue(LocalDate.now()); }
 }
