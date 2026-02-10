@@ -4,20 +4,16 @@ import it.unicam.cs.mpgc.jtime122631.model.InfoProject;
 import it.unicam.cs.mpgc.jtime122631.model.InfoTask;
 import it.unicam.cs.mpgc.jtime122631.model.TaskPriority;
 import it.unicam.cs.mpgc.jtime122631.service.TaskService;
-import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import javafx.util.Callback;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -45,86 +41,18 @@ public class ProjectDetailsController {
 
     @FXML
     public void initialize() {
-        colTitle.setCellValueFactory(new PropertyValueFactory<>("title"));
-        colTitle.setCellFactory(column -> new TableCell<>() {
-            @Override
-            protected void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
-                } else {
-                    setText(item);
-                    setAlignment(Pos.CENTER_LEFT);
-                    setPadding(new Insets(0, 0, 0, 10));
-                }
-            }
-        });
-
-        if (colPriority != null) {
-            colPriority.setCellValueFactory(new PropertyValueFactory<>("priority"));
-            colPriority.setCellFactory(column -> new TableCell<>() {
-                @Override
-                protected void updateItem(TaskPriority item, boolean empty) {
-                    super.updateItem(item, empty);
-                    if (empty || item == null) {
-                        setGraphic(null);
-                        setText(null);
-                    } else {
-                        HBox container = new HBox(6);
-                        container.setAlignment(Pos.CENTER);
-
-                        Label flagIcon = new Label("⚑");
-                        Label priorityText = new Label(item.name());
-
-                        String color;
-                        switch (item) {
-                            case URGENTE -> color = "#ef4444";
-                            case ALTA    -> color = "#f59e0b";
-                            case NORMALE -> color = "#3b82f6";
-                            case BASSA   -> color = "#94a3b8";
-                            default      -> color = "#1e293b";
-                        }
-
-                        flagIcon.setStyle("-fx-text-fill: " + color + "; -fx-font-size: 15px; -fx-font-weight: bold;");
-                        priorityText.setStyle("-fx-text-fill: " + color + "; -fx-font-size: 10px; -fx-font-weight: bold; -fx-text-transform: uppercase;");
-                        container.getChildren().addAll(flagIcon, priorityText);
-                        container.setPadding(new Insets(3, 10, 3, 10));
-                        container.setStyle("-fx-background-color: " + color + "15; -fx-background-radius: 4;");
-                        setGraphic(container);
-                        setAlignment(Pos.CENTER);
-                    }
-                }
-            });
-        }
-
-        colStatus.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getStatus().name()));
-        setupStatusBadge();
-        setupCenterColumn(colEstimated, task -> formatDuration(task.getEstimatedDuration()));
-        setupCenterColumn(colActual, task -> formatDuration(task.getActualDuration()));
-        setupCenterColumn(colDate, task -> task.getScheduledDate() != null ? task.getScheduledDate().toString() : "-");
+        TableUtil.setupTitleColumn(colTitle);
+        TableUtil.setupPriorityColumn(colPriority);
+        TableUtil.setupStatusColumn(colStatus);
+        TableUtil.setupCenterColumn(colEstimated, task -> formatDuration(task.getEstimatedDuration()));
+        TableUtil.setupCenterColumn(colActual, task -> formatDuration(task.getActualDuration()));
+        TableUtil.setupCenterColumn(colDate, task -> task.getScheduledDate() != null ? task.getScheduledDate().toString() : "-");
         setupTaskActions();
     }
 
     private String formatDuration(Duration d) {
         if (d == null) return "0 min";
         return d.toMinutes() + " min";
-    }
-
-    private void setupCenterColumn(TableColumn<InfoTask, String> column, Callback<InfoTask, String> mapper) {
-        column.setCellValueFactory(data -> new SimpleStringProperty(mapper.call(data.getValue())));
-        column.setCellFactory(col -> new TableCell<>() {
-            @Override
-            protected void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
-                    setGraphic(null);
-                } else {
-                    setText(item);
-                    setAlignment(Pos.CENTER);
-                }
-            }
-        });
     }
 
     public void setServices(InfoProject project, TaskService tService, MainController mController) {

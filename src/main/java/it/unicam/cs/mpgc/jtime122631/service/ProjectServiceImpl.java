@@ -85,11 +85,6 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public long countTotalProjects() {
-        return projectRepository.findAll().size();
-    }
-
-    @Override
     public long countActiveProjects() {
         return projectRepository.findAll().stream()
                 .filter(p -> p.getStatus() == ProjectStatus.ACTIVE)
@@ -101,5 +96,15 @@ public class ProjectServiceImpl implements ProjectService {
         return projectRepository.findAll().stream()
                 .filter(p -> p.getStatus() == ProjectStatus.COMPLETED)
                 .count();
+    }
+
+    @Override
+    public double getCompletionPercentage() {
+        long active = countActiveProjects();
+        long completed = countCompletedProjects();
+        long total = active + completed;
+
+        if (total == 0) return 0.0;
+        return (double) completed * 100 / total;
     }
 }

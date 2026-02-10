@@ -53,10 +53,16 @@
 
             <VBox style="-fx-background-color: white; -fx-background-radius: 15; -fx-padding: 20; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 10, 0, 0, 5);"
                   HBox.hgrow="ALWAYS">
-                <Label text="Stato Attività" style="-fx-font-weight: bold; -fx-font-size: 16px; -fx-text-fill: #334155;"/>
-                <BarChart fx:id="taskBarChart" legendVisible="true" minHeight="300">
-                    <xAxis> <CategoryAxis label="Tipologia" /> </xAxis>
-                    <yAxis> <NumberAxis label="Quantità" /> </yAxis>
+                <Label text="Priorità Task da Fare" style="-fx-font-weight: bold; -fx-font-size: 16px; -fx-text-fill: #334155;"/>
+                <BarChart fx:id="priorityBarChart" legendVisible="false" minHeight="300">
+                    <xAxis> <CategoryAxis label="Priorità" /> </xAxis>
+                    <yAxis>
+                        <NumberAxis fx:id="priorityYAxis" label="Quantità"
+                                    tickUnit="1"
+                                    minorTickVisible="false"
+                                    upperBound="5"
+                                    autoRanging="true" />
+                    </yAxis>
                 </BarChart>
             </VBox>
         </HBox>

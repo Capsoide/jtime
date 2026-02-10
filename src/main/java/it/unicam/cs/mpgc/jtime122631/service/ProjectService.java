@@ -13,7 +13,7 @@ public interface ProjectService {
     InfoProject getProject(int id);
     List<Project> getAllProjects();
 
-    long countTotalProjects();
     long countActiveProjects();
     long countCompletedProjects();
+    double getCompletionPercentage();
 }

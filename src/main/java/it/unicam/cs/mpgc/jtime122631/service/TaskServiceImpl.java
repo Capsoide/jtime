@@ -25,14 +25,11 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public void createTask(int projectId, String title, LocalDate scheduledDate, Duration estimated, TaskPriority priority) {
         Project project = projectRepository.findById(projectId);
-        if (project == null) {
-            throw new JTimeException("Progetto non trovato.");
-        }
+        if (project == null) throw new JTimeException("Progetto non trovato.");
         if (project.getStatus() == ProjectStatus.COMPLETED) {
             throw new JTimeException("Non puoi aggiungere attività a un progetto chiuso.");
         }
         TaskPriority safePriority = (priority != null) ? priority : TaskPriority.NORMALE;
-
         Task newTask = new Task(0, projectId, title, TaskStatus.PENDING, safePriority, estimated, Duration.ZERO, scheduledDate);
         taskRepository.save(newTask);
     }
@@ -41,115 +38,78 @@ public class TaskServiceImpl implements TaskService {
     public void updateTask(int id, String title, LocalDate scheduledDate, Duration estimated, TaskPriority priority) {
         Task existing = taskRepository.findById(id);
         if (existing == null) throw new JTimeException("Task non trovato.");
-
         TaskPriority safePriority = (priority != null) ? priority : TaskPriority.NORMALE;
-
-        Task updatedTask = new Task(
-                existing.getId(),
-                existing.getProjectId(),
-                title,
-                existing.getStatus(),
-                safePriority,
-                estimated != null ? estimated : Duration.ZERO,
-                existing.getActualDuration(),
-                scheduledDate
-        );
+        Task updatedTask = new Task(existing.getId(), existing.getProjectId(), title, existing.getStatus(),
+                safePriority, estimated != null ? estimated : Duration.ZERO, existing.getActualDuration(), scheduledDate);
         taskRepository.save(updatedTask);
     }
 
     @Override
     public void completeTask(int taskId, Duration actualDuration) {
         Task existingTask = taskRepository.findById(taskId);
-        if (existingTask == null) throw new JTimeException("Impossibile completare: Task non trovato.");
-        if (existingTask.getStatus() == TaskStatus.COMPLETED) throw new JTimeException("Task già completato.");
-
-        Task completedTask = new Task(
-                existingTask.getId(),
-                existingTask.getProjectId(),
-                existingTask.getTitle(),
-                TaskStatus.COMPLETED,
-                existingTask.getPriority(),
-                existingTask.getEstimatedDuration(),
-                actualDuration,
-                existingTask.getScheduledDate()
-        );
+        if (existingTask == null) throw new JTimeException("Task non trovato.");
+        Task completedTask = new Task(existingTask.getId(), existingTask.getProjectId(), existingTask.getTitle(),
+                TaskStatus.COMPLETED, existingTask.getPriority(), existingTask.getEstimatedDuration(), actualDuration, existingTask.getScheduledDate());
         taskRepository.save(completedTask);
     }
 
     @Override
-    public void deleteTask(int taskId) {
-        if (taskRepository.findById(taskId) == null) throw new JTimeException("Task non trovato.");
-        taskRepository.deleteById(taskId);
-    }
+    public void deleteTask(int taskId) { taskRepository.deleteById(taskId); }
 
     @Override
     public List<InfoTask> getTasksByProject(int projectId) {
-        return taskRepository.findByProject(projectId).stream()
-                .map(t -> (InfoTask) t)
-                .collect(Collectors.toList());
+        return taskRepository.findByProject(projectId).stream().map(t -> (InfoTask) t).collect(Collectors.toList());
     }
 
     @Override
     public List<InfoTask> getDailyPlan(LocalDate date) {
-        return taskRepository.findByDate(date).stream()
-                .map(t -> (InfoTask) t)
-                .collect(Collectors.toList());
+        return taskRepository.findByDate(date).stream().map(t -> (InfoTask) t).collect(Collectors.toList());
     }
 
     @Override
-    public Duration getTotalEstimatedTimeForDate(LocalDate date) {
+    public Duration getRemainingMinutesForDate(LocalDate date) {
         return taskRepository.findByDate(date).stream()
+                .filter(t -> t.getStatus() != TaskStatus.COMPLETED)
                 .map(Task::getEstimatedDuration)
                 .reduce(Duration.ZERO, Duration::plus);
     }
 
     @Override
-    public void rescheduleTask(int taskId, LocalDate newDate) {
-        taskRepository.updateDate(taskId, newDate);
+    public Map<TaskPriority, Long> getPendingTasksByPriority() {
+        return taskRepository.findAll().stream()
+                .filter(t -> t.getStatus() != TaskStatus.COMPLETED)
+                .collect(Collectors.groupingBy(Task::getPriority, Collectors.counting()));
     }
 
     @Override
-    public long countTotalTasks() {
-        return taskRepository.findAll().size();
-    }
+    public void rescheduleTask(int taskId, LocalDate newDate) { taskRepository.updateDate(taskId, newDate); }
+
+    @Override
+    public long countTotalTasks() { return taskRepository.findAll().size(); }
 
     @Override
     public long countCompletedTasks() {
-        return taskRepository.findAll().stream()
-                .filter(t -> t.getStatus() == TaskStatus.COMPLETED)
-                .count();
+        return taskRepository.findAll().stream().filter(t -> t.getStatus() == TaskStatus.COMPLETED).count();
     }
 
     @Override
     public Duration getTotalEstimatedTime() {
-        return taskRepository.findAll().stream()
-                .map(Task::getEstimatedDuration)
-                .reduce(Duration.ZERO, Duration::plus);
+        return taskRepository.findAll().stream().map(Task::getEstimatedDuration).reduce(Duration.ZERO, Duration::plus);
     }
 
     @Override
     public Duration getTotalActualTime() {
-        return taskRepository.findAll().stream()
-                .map(Task::getActualDuration)
-                .reduce(Duration.ZERO, Duration::plus);
+        return taskRepository.findAll().stream().map(Task::getActualDuration).reduce(Duration.ZERO, Duration::plus);
     }
 
     @Override
     public Map<LocalDate, Long> getWeeklyProductivity() {
         LocalDate today = LocalDate.now();
         LocalDate oneWeekAgo = today.minusDays(6);
-
-        List<Task> allTasks = taskRepository.findAll();
-
-        Map<LocalDate, Long> counts = allTasks.stream()
-                .filter(t -> t.getStatus() == TaskStatus.COMPLETED)
-                .filter(t -> t.getScheduledDate() != null)
+        Map<LocalDate, Long> counts = taskRepository.findAll().stream()
+                .filter(t -> t.getStatus() == TaskStatus.COMPLETED && t.getScheduledDate() != null)
                 .filter(t -> !t.getScheduledDate().isBefore(oneWeekAgo) && !t.getScheduledDate().isAfter(today))
-                .collect(Collectors.groupingBy(
-                        Task::getScheduledDate,
-                        Collectors.counting()
-                ));
-
+                .collect(Collectors.groupingBy(Task::getScheduledDate, Collectors.counting()));
         Map<LocalDate, Long> result = new TreeMap<>();
         for (int i = 0; i < 7; i++) {
             LocalDate d = oneWeekAgo.plusDays(i);
@@ -159,15 +119,11 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    public List<InfoTask> getOverdueTasks() {
-        return new ArrayList<>(taskRepository.findOverdueTasks(LocalDate.now()));
-    }
+    public List<InfoTask> getOverdueTasks() { return new ArrayList<>(taskRepository.findOverdueTasks(LocalDate.now())); }
 
     @Override
     public void rescheduleAllToToday(List<InfoTask> tasks) {
         LocalDate today = LocalDate.now();
-        for (InfoTask t : tasks) {
-            taskRepository.updateDate(t.getId(), today);
-        }
+        for (InfoTask t : tasks) { taskRepository.updateDate(t.getId(), today); }
     }
 }

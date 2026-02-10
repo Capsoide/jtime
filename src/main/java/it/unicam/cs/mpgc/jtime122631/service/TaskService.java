@@ -23,6 +23,8 @@ public interface TaskService {
     long countCompletedTasks();
     Duration getTotalEstimatedTime();
     Duration getTotalActualTime();
-    Duration getTotalEstimatedTimeForDate(LocalDate date);
+    Duration getRemainingMinutesForDate(LocalDate date);
+
+    Map<TaskPriority, Long> getPendingTasksByPriority();
     Map<LocalDate, Long> getWeeklyProductivity();
 }

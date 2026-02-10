@@ -30,15 +30,15 @@
         <TableView fx:id="projectsTable" style="-fx-background-radius: 15;">
             <columns>
                 <TableColumn fx:id="colName" text="NOME PROGETTO" prefWidth="250"
-                             style="-fx-alignment: CENTER_LEFT;"/>
+                             styleClass="col-left"/>
 
                 <TableColumn fx:id="colDescription" text="DESCRIZIONE" prefWidth="400"
-                             style="-fx-alignment: CENTER_LEFT;"/>
+                             styleClass="col-left"/>
 
                 <TableColumn fx:id="colStatus" text="STATO" prefWidth="150"
                              styleClass="col-center"/>
 
-                <TableColumn fx:id="colActions" text="AZIONI" prefWidth="150" sortable="false"
+                <TableColumn fx:id="colActions" text="AZIONI" prefWidth="200" sortable="false"
                              styleClass="col-center"/>
             </columns>
 

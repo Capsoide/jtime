@@ -1,19 +1,23 @@
 package it.unicam.cs.mpgc.jtime122631.controller;
 
 import it.unicam.cs.mpgc.jtime122631.model.InfoTask;
+import it.unicam.cs.mpgc.jtime122631.model.TaskPriority;
 import it.unicam.cs.mpgc.jtime122631.service.ProjectService;
 import it.unicam.cs.mpgc.jtime122631.service.TaskService;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.chart.BarChart;
+import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.PieChart;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
+import javafx.util.StringConverter;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 
 public class ReportController {
     @FXML private VBox cardOverdue;
@@ -22,7 +26,8 @@ public class ReportController {
     @FXML private Label lblCompletedTasks;
     @FXML private Label lblTotalActual;
     @FXML private PieChart projectPieChart;
-    @FXML private BarChart<String, Number> taskBarChart;
+    @FXML private BarChart<String, Number> priorityBarChart;
+    @FXML private NumberAxis priorityYAxis;
 
     private ProjectService projectService;
     private TaskService taskService;
@@ -72,26 +77,49 @@ public class ReportController {
         projectPieChart.setData(pieData);
         projectPieChart.setLegendVisible(true);
 
-        XYChart.Series<String, Number> series = new XYChart.Series<>();
-        series.setName("Tasks");
+        // --- Configurazione Asse Y (Rimoziome decimali) ---
+        priorityYAxis.setTickUnit(1);
+        priorityYAxis.setMinorTickVisible(false);
+        priorityYAxis.setAutoRanging(true);
+        priorityYAxis.setTickLabelFormatter(new StringConverter<Number>() {
+            @Override
+            public String toString(Number object) {
+                if (object.doubleValue() == object.intValue()) {
+                    return String.valueOf(object.intValue());
+                }
+                return "";
+            }
 
-        XYChart.Data<String, Number> dataPending = new XYChart.Data<>("Da Fare", pendingTasks);
-        XYChart.Data<String, Number> dataCompleted = new XYChart.Data<>("Completati", completedTasks);
-
-        dataPending.nodeProperty().addListener((obs, oldNode, newNode) -> {
-            if (newNode != null) newNode.setStyle("-fx-bar-fill: #dc2626;");
+            @Override
+            public Number fromString(String string) {
+                return Integer.parseInt(string);
+            }
         });
 
-        dataCompleted.nodeProperty().addListener((obs, oldNode, newNode) -> {
-            if (newNode != null) newNode.setStyle("-fx-bar-fill: #10b981;");
+        Map<TaskPriority, Long> priorityStats = taskService.getPendingTasksByPriority();
+        XYChart.Series<String, Number> seriesPriority = new XYChart.Series<>();
+        seriesPriority.setName("Priorità");
+
+        addPriorityData(seriesPriority, priorityStats, TaskPriority.URGENTE, "#ef4444");
+        addPriorityData(seriesPriority, priorityStats, TaskPriority.ALTA, "#f59e0b");
+        addPriorityData(seriesPriority, priorityStats, TaskPriority.NORMALE, "#3b82f6");
+        addPriorityData(seriesPriority, priorityStats, TaskPriority.BASSA, "#94a3b8");
+
+        priorityBarChart.getData().clear();
+        priorityBarChart.getData().add(seriesPriority);
+        priorityBarChart.setLegendVisible(false);
+        priorityBarChart.setCategoryGap(50);
+    }
+
+    private void addPriorityData(XYChart.Series<String, Number> series, Map<TaskPriority, Long> stats, TaskPriority p, String color) {
+        long count = stats.getOrDefault(p, 0L);
+        XYChart.Data<String, Number> data = new XYChart.Data<>(p.name(), count);
+
+        data.nodeProperty().addListener((obs, oldNode, newNode) -> {
+            if (newNode != null) newNode.setStyle("-fx-bar-fill: " + color + ";");
         });
 
-        series.getData().addAll(dataPending, dataCompleted);
-
-        taskBarChart.getData().clear();
-        taskBarChart.getData().add(series);
-        taskBarChart.setLegendVisible(false);
-        taskBarChart.setCategoryGap(50);
+        series.getData().add(data);
     }
 
     private String formatDuration(Duration duration) {

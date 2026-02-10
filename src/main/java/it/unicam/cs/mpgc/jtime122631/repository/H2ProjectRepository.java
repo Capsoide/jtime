@@ -12,14 +12,10 @@ public class H2ProjectRepository implements ProjectRepository {
 
     @Override
     public Project save(Project project) {
-        String sql;
         boolean isUpdate = project.getId() > 0 && existsById(project.getId());
-
-        if (isUpdate) {
-            sql = "UPDATE project SET name=?, description=?, status=? WHERE id=?";
-        } else {
-            sql = "INSERT INTO project (name, description, status) VALUES (?, ?, ?)";
-        }
+        String sql = isUpdate
+                ? "UPDATE project SET name=?, description=?, status=? WHERE id=?"
+                : "INSERT INTO project (name, description, status) VALUES (?, ?, ?)";
 
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -36,8 +32,7 @@ public class H2ProjectRepository implements ProjectRepository {
                 stmt.executeUpdate();
                 try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
                     if (generatedKeys.next()) {
-                        int newId = generatedKeys.getInt(1);
-                        return new Project(newId, project.getName(), project.getDescription(), project.getStatus());
+                        return new Project(generatedKeys.getInt(1), project.getName(), project.getDescription(), project.getStatus());
                     }
                 }
             }
