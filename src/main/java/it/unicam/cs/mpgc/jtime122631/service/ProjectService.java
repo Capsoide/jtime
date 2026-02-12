@@ -16,4 +16,5 @@ public interface ProjectService {
     long countActiveProjects();
     long countCompletedProjects();
     double getCompletionPercentage();
+    void generateReport(int projectId, java.io.File file);
 }

@@ -1,124 +1,75 @@
 package it.unicam.cs.mpgc.jtime122631.controller;
 
 import it.unicam.cs.mpgc.jtime122631.model.InfoProject;
-import it.unicam.cs.mpgc.jtime122631.model.InfoTask;
 import it.unicam.cs.mpgc.jtime122631.service.ProjectService;
 import it.unicam.cs.mpgc.jtime122631.service.TaskService;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
-
 import java.awt.Desktop;
 import java.net.URI;
-import java.util.List;
-import java.util.Optional;
 
 public class MainController {
 
     @FXML private StackPane contentArea;
-    @FXML private Button btnProjects;
-    @FXML private Button btnPlanning;
-    @FXML private Button btnReports;
-
-    private ProjectService projectService;
     private TaskService taskService;
     private ViewFactory viewFactory;
 
-    public void setServices(ProjectService pService, TaskService tService) {
-        this.projectService = pService;
-        this.taskService = tService;
-        this.viewFactory = new ViewFactory(pService, tService, contentArea);
+    public void setServices(ProjectService projectService, TaskService taskService) {
+        this.taskService = taskService;
+        this.viewFactory = new ViewFactory(projectService, taskService, contentArea);
 
         showReports();
         Platform.runLater(this::checkOverdueTasks);
     }
 
+    private void checkOverdueTasks() {
+        if (taskService == null) return;
+        var overdue = taskService.getOverdueTasks();
+        if (overdue.isEmpty()) return;
+
+        if (contentArea.getScene() == null || contentArea.getScene().getWindow() == null) {
+            Platform.runLater(this::checkOverdueTasks);
+            return;
+        }
+
+        TableUtil.showTaskSelectionDialog(
+                overdue,
+                contentArea.getScene().getWindow(),
+                selected -> {
+                    if (selected != null && !selected.isEmpty()) {
+                        taskService.rescheduleAllToToday(selected);
+                        showReports();
+                    }
+                }
+        );
+    }
+
     @FXML
     public void showProjects() {
-        setActiveButton(btnProjects);
-        if (viewFactory != null) {
-            viewFactory.showProjects(this);
-        }
+        viewFactory.showProjects(this);
     }
 
     @FXML
     public void showPlanning() {
-        setActiveButton(btnPlanning);
-        if (viewFactory != null) {
-            viewFactory.showPlanning();
-        }
+        viewFactory.showPlanning();
     }
 
     @FXML
     public void showReports() {
-        setActiveButton(btnReports);
-        if (viewFactory != null) {
-            viewFactory.showReports();
-        }
+        viewFactory.showReports();
     }
 
     public void showProjectDetails(InfoProject project) {
-        setActiveButton(btnProjects);
-        if (viewFactory != null) {
-            viewFactory.showProjectDetails(project, this);
-        }
-    }
-
-
-    private void setActiveButton(Button activeButton) {
-        btnProjects.getStyleClass().remove("menu-button-active");
-        btnPlanning.getStyleClass().remove("menu-button-active");
-        btnReports.getStyleClass().remove("menu-button-active");
-
-        activeButton.getStyleClass().add("menu-button-active");
+        viewFactory.showProjectDetails(project, this);
     }
 
     @FXML
-    private void handleVisitWebsite() {
+    public void handleVisitWebsite() {
         try {
-            String url = "https://github.com/Capsoide";
-            Desktop.getDesktop().browse(new URI(url));
+            Desktop.getDesktop().browse(new URI("https://github.com/Capsoide"));
         } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void checkOverdueTasks() {
-        if (taskService == null) return;
-
-        List<InfoTask> overdueTasks = taskService.getOverdueTasks();
-
-        if (!overdueTasks.isEmpty()) {
-            Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-            if (contentArea.getScene() != null && contentArea.getScene().getWindow() != null) {
-                alert.initOwner(contentArea.getScene().getWindow());
-            }
-            alert.setTitle("Pianificazione");
-            alert.setHeaderText("Hai " + overdueTasks.size() + " attività lasciate indietro!");
-            alert.setContentText("Vuoi spostarle tutte alla pianificazione di OGGI?");
-
-            ButtonType btnYes = new ButtonType("Sì, sposta a Oggi");
-            ButtonType btnNo = new ButtonType("No, lasciale lì");
-            alert.getButtonTypes().setAll(btnYes, btnNo);
-
-            Optional<ButtonType> result = alert.showAndWait();
-
-            if (result.isPresent() && result.get() == btnYes) {
-                taskService.rescheduleAllToToday(overdueTasks);
-                showReports();
-
-                Alert success = new Alert(Alert.AlertType.INFORMATION);
-                if (contentArea.getScene() != null && contentArea.getScene().getWindow() != null) {
-                    success.initOwner(contentArea.getScene().getWindow());
-                }
-                success.setHeaderText("Aggiornamento completato");
-                success.setContentText("Le attività sono ora nella lista di oggi.");
-                success.show();
-            }
+            System.err.println("Impossibile aprire il browser: " + e.getMessage());
         }
     }
 }

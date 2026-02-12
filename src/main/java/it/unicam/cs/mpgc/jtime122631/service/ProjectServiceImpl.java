@@ -24,23 +24,15 @@ public class ProjectServiceImpl implements ProjectService {
         if (name == null || name.isBlank()) {
             throw new JTimeException("Il nome del progetto non può essere vuoto.");
         }
-        Project newProject = new Project(name, description);
-        projectRepository.save(newProject);
+        projectRepository.save(new Project(name, description));
     }
 
     @Override
     public void updateProject(int id, String name, String description) {
         Project existing = projectRepository.findById(id);
-        if (existing == null) {
-            throw new JTimeException("Progetto non trovato con ID: " + id);
-        }
-        Project updatedProject = new Project(
-                existing.getId(),
-                name,
-                description,
-                existing.getStatus()
-        );
-        projectRepository.save(updatedProject);
+        if (existing == null) throw new JTimeException("Progetto non trovato.");
+
+        projectRepository.save(new Project(existing.getId(), name, description, existing.getStatus()));
     }
 
     @Override
@@ -51,32 +43,23 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     public InfoProject getProject(int id) {
         Project p = projectRepository.findById(id);
-        if (p == null) throw new JTimeException("Progetto non trovato con ID: " + id);
+        if (p == null) throw new JTimeException("Progetto non trovato.");
         return p;
     }
 
     @Override
     public void closeProject(int projectId) {
         Project project = projectRepository.findById(projectId);
-        if (project == null) {
-            throw new JTimeException("Impossibile chiudere: Progetto non trovato.");
-        }
+        if (project == null) throw new JTimeException("Progetto non trovato.");
 
-        var tasks = taskRepository.findByProject(projectId);
-        boolean hasPendingTasks = tasks.stream()
+        boolean hasPendingTasks = taskRepository.findByProject(projectId).stream()
                 .anyMatch(t -> t.getStatus() != TaskStatus.COMPLETED);
 
         if (hasPendingTasks) {
-            throw new JTimeException("Impossibile chiudere il progetto: ci sono attività ancora pendenti.");
+            throw new JTimeException("Impossibile chiudere il progetto: completare prima tutte le attività.");
         }
 
-        Project completedProject = new Project(
-                project.getId(),
-                project.getName(),
-                project.getDescription(),
-                ProjectStatus.COMPLETED
-        );
-        projectRepository.save(completedProject);
+        projectRepository.save(new Project(project.getId(), project.getName(), project.getDescription(), ProjectStatus.COMPLETED));
     }
 
     @Override
@@ -86,25 +69,27 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public long countActiveProjects() {
-        return projectRepository.findAll().stream()
-                .filter(p -> p.getStatus() == ProjectStatus.ACTIVE)
-                .count();
+        return projectRepository.findAll().stream().filter(p -> p.getStatus() == ProjectStatus.ACTIVE).count();
     }
 
     @Override
     public long countCompletedProjects() {
-        return projectRepository.findAll().stream()
-                .filter(p -> p.getStatus() == ProjectStatus.COMPLETED)
-                .count();
+        return projectRepository.findAll().stream().filter(p -> p.getStatus() == ProjectStatus.COMPLETED).count();
     }
 
     @Override
     public double getCompletionPercentage() {
-        long active = countActiveProjects();
-        long completed = countCompletedProjects();
-        long total = active + completed;
+        List<Project> all = projectRepository.findAll();
+        if (all.isEmpty()) return 0.0;
+        long completed = all.stream().filter(p -> p.getStatus() == ProjectStatus.COMPLETED).count();
+        return (double) completed * 100 / all.size();
+    }
 
-        if (total == 0) return 0.0;
-        return (double) completed * 100 / total;
+    @Override
+    public void generateReport(int projectId, java.io.File file) {
+        InfoProject project = getProject(projectId);
+        var tasks = taskRepository.findByProject(projectId);
+
+        ProjectReportExporter.exportToText(project, tasks, file);
     }
 }

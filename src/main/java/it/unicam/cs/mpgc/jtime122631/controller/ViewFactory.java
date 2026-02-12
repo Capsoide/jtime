@@ -64,7 +64,7 @@ public class ViewFactory {
 
         } catch (IOException e) {
             e.printStackTrace();
-            showErrorAlert("Errore Critico", "Impossibile caricare la vista: " + fxmlPath + "\n" + e.getMessage());
+            showErrorAlert("Errore", "Impossibile caricare la vista: " + fxmlPath + "\n" + e.getMessage());
         }
     }
 

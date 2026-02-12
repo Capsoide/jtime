@@ -3,6 +3,7 @@ package it.unicam.cs.mpgc.jtime122631.repository;
 import it.unicam.cs.mpgc.jtime122631.infrastructure.DatabaseManager;
 import it.unicam.cs.mpgc.jtime122631.model.Project;
 import it.unicam.cs.mpgc.jtime122631.model.ProjectStatus;
+import it.unicam.cs.mpgc.jtime122631.service.JTimeException;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -37,49 +38,30 @@ public class H2ProjectRepository implements ProjectRepository {
                 }
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Errore salvataggio progetto", e);
+            throw new JTimeException("Errore durante il salvataggio del progetto: " + e.getMessage());
         }
         return null;
     }
 
     @Override
     public Project findById(int id) {
-        String sql = "SELECT * FROM project WHERE id = ?";
-        try (Connection conn = DatabaseManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setInt(1, id);
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) return mapRow(rs);
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException("Errore lettura progetto", e);
-        }
-        return null;
+        List<Project> result = executeQuery("SELECT * FROM project WHERE id = ?", stmt -> stmt.setInt(1, id));
+        return result.isEmpty() ? null : result.get(0);
     }
 
     @Override
     public List<Project> findAll() {
-        List<Project> list = new ArrayList<>();
-        String sql = "SELECT * FROM project";
-        try (Connection conn = DatabaseManager.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
-            while (rs.next()) list.add(mapRow(rs));
-        } catch (SQLException e) {
-            throw new RuntimeException("Errore lettura lista progetti", e);
-        }
-        return list;
+        return executeQuery("SELECT * FROM project", stmt -> {});
     }
 
     @Override
     public void deleteById(int id) {
-        String sql = "DELETE FROM project WHERE id = ?";
         try (Connection conn = DatabaseManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+             PreparedStatement stmt = conn.prepareStatement("DELETE FROM project WHERE id = ?")) {
             stmt.setInt(1, id);
             stmt.executeUpdate();
         } catch (SQLException e) {
-            throw new RuntimeException("Errore eliminazione progetto", e);
+            throw new JTimeException("Errore durante l'eliminazione del progetto: " + e.getMessage());
         }
     }
 
@@ -97,12 +79,29 @@ public class H2ProjectRepository implements ProjectRepository {
         }
     }
 
-    private Project mapRow(ResultSet rs) throws SQLException {
-        return new Project(
-                rs.getInt("id"),
-                rs.getString("name"),
-                rs.getString("description"),
-                ProjectStatus.valueOf(rs.getString("status"))
-        );
+    private List<Project> executeQuery(String sql, StatementBinder binder) {
+        List<Project> list = new ArrayList<>();
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            binder.bind(stmt);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    list.add(new Project(
+                            rs.getInt("id"),
+                            rs.getString("name"),
+                            rs.getString("description"),
+                            ProjectStatus.valueOf(rs.getString("status"))
+                    ));
+                }
+            }
+        } catch (SQLException e) {
+            throw new JTimeException("Errore esecuzione query progetto: " + e.getMessage());
+        }
+        return list;
+    }
+
+    @FunctionalInterface
+    private interface StatementBinder {
+        void bind(PreparedStatement stmt) throws SQLException;
     }
 }

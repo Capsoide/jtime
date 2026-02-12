@@ -329,9 +329,9 @@
 
 .badge {
     -fx-font-weight: bold;
-    -fx-padding: 2 10;
+    -fx-padding: 3 8;
     -fx-background-radius: 12;
-    -fx-font-size: 11px;
+    -fx-font-size: 10px;
 }
 
 .priority-urgente { -fx-text-fill: #ef4444; -fx-background-color: #fee2e2; }
@@ -342,3 +342,96 @@
 .status-active    { -fx-text-fill: #15803d; -fx-background-color: #dcfce7; }
 .status-completed { -fx-text-fill: #1e293b; -fx-background-color: #e2e8f0; }
 .status-pending   { -fx-text-fill: #b45309; -fx-background-color: #fef3c7; }
+
+.summary-label-ok {
+    -fx-text-fill: #15803d;
+    -fx-font-weight: bold;
+}
+.summary-label-warning {
+    -fx-text-fill: #d97706;
+    -fx-font-weight: bold;
+}
+.summary-label-danger {
+    -fx-text-fill: #dc2626;
+    -fx-font-weight: bold;
+}
+
+.report-button {
+    -fx-background-color: #e0e7ff;
+    -fx-text-fill: #4338ca;
+    -fx-font-weight: bold;
+    -fx-font-size: 10px;
+    -fx-cursor: hand;
+    -fx-padding: 4 8;
+    -fx-background-radius: 6;
+}
+
+.report-button:hover {
+    -fx-background-color: #c7d2fe;
+    -fx-text-fill: #3730a3;
+}
+
+.custom-dialog-pane {
+    -fx-background-color: white;
+    -fx-padding: 20;
+}
+
+.custom-dialog-pane .header-panel {
+    -fx-background-color: #f8fafc;
+    -fx-padding: 15;
+    -fx-border-color: #e2e8f0;
+    -fx-border-width: 0 0 1 0;
+}
+
+.custom-dialog-pane .header-panel .label {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1e293b;
+}
+
+.dialog-button-confirm {
+    -fx-background-color: #4f46e5;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+}
+
+.dialog-button-cancel {
+    -fx-background-color: #f1f5f9;
+    -fx-text-fill: #64748b;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+}
+
+.modern-list-view {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-border-color: #e2e8f0;
+    -fx-border-radius: 8;
+    -fx-padding: 5;
+}
+
+/* --- Stile bottone icona occhio (Turn 44) --- */
+.icon-button-eye {
+    -fx-background-color: transparent;
+    -fx-text-fill: #94a3b8; /* Grigio tenue iniziale */
+    -fx-font-size: 20px;    /* AUMENTATO: Da 14px a 20px per maggiore visibilità */
+    -fx-cursor: hand;
+    -fx-padding: 4px 8px;   /* Aggiunto padding per allargare l'area cliccabile */
+    -fx-background-radius: 50%; /* Rende lo sfondo circolare al passaggio */
+    -fx-border-color: transparent; /* Assicura nessun bordo di default */
+    -fx-border-width: 0;
+}
+
+.icon-button-eye:hover {
+    /* Effetto hover più evidente */
+    -fx-text-fill: #4f46e5; /* L'icona diventa blu */
+    /* Aggiunge un leggerissimo sfondo blu circolare */
+    -fx-background-color: rgba(79, 70, 229, 0.1);
+}
+
+/* Opzionale: effetto quando si clicca */
+.icon-button-eye:pressed {
+    -fx-background-color: rgba(79, 70, 229, 0.2);
+}

@@ -4,6 +4,7 @@ import it.unicam.cs.mpgc.jtime122631.infrastructure.DatabaseManager;
 import it.unicam.cs.mpgc.jtime122631.model.Task;
 import it.unicam.cs.mpgc.jtime122631.model.TaskStatus;
 import it.unicam.cs.mpgc.jtime122631.model.TaskPriority;
+import it.unicam.cs.mpgc.jtime122631.service.JTimeException;
 
 import java.sql.*;
 import java.time.Duration;
@@ -32,11 +33,8 @@ public class H2TaskRepository implements TaskRepository {
             stmt.setLong(i++, task.getEstimatedDuration().toMinutes());
             stmt.setLong(i++, task.getActualDuration().toMinutes());
 
-            if (task.getScheduledDate() != null) {
-                stmt.setDate(i++, Date.valueOf(task.getScheduledDate()));
-            } else {
-                stmt.setNull(i++, Types.DATE);
-            }
+            if (task.getScheduledDate() != null) stmt.setDate(i++, Date.valueOf(task.getScheduledDate()));
+            else stmt.setNull(i++, Types.DATE);
 
             if (isUpdate) {
                 stmt.setInt(i, task.getId());
@@ -52,50 +50,43 @@ public class H2TaskRepository implements TaskRepository {
                 }
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Errore salvataggio task", e);
+            throw new JTimeException("Errore salvataggio task: " + e.getMessage());
         }
         return null;
     }
 
-    @Override
-    public List<Task> findByProject(int projectId) {
+    @Override public List<Task> findByProject(int projectId) {
         return executeQuery("SELECT * FROM task WHERE project_id = ?", stmt -> stmt.setInt(1, projectId));
     }
 
-    @Override
-    public List<Task> findByDate(LocalDate date) {
+    @Override public List<Task> findByDate(LocalDate date) {
         return executeQuery("SELECT * FROM task WHERE scheduled_date = ?", stmt -> stmt.setDate(1, Date.valueOf(date)));
     }
 
-    @Override
-    public List<Task> findOverdueTasks(LocalDate today) {
+    @Override public List<Task> findOverdueTasks(LocalDate today) {
         return executeQuery("SELECT * FROM task WHERE status != 'COMPLETED' AND scheduled_date < ?", stmt -> stmt.setDate(1, Date.valueOf(today)));
     }
 
-    @Override
-    public Task findById(int id) {
+    @Override public Task findById(int id) {
         List<Task> results = executeQuery("SELECT * FROM task WHERE id = ?", stmt -> stmt.setInt(1, id));
         return results.isEmpty() ? null : results.get(0);
     }
 
-    @Override
-    public List<Task> findAll() {
+    @Override public List<Task> findAll() {
         return executeQuery("SELECT * FROM task", stmt -> {});
     }
 
-    @Override
-    public void deleteById(int id) {
+    @Override public void deleteById(int id) {
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement("DELETE FROM task WHERE id = ?")) {
             stmt.setInt(1, id);
             stmt.executeUpdate();
         } catch (SQLException e) {
-            throw new RuntimeException("Errore eliminazione task", e);
+            throw new JTimeException("Errore eliminazione task: " + e.getMessage());
         }
     }
 
-    @Override
-    public void updateDate(int taskId, LocalDate newDate) {
+    @Override public void updateDate(int taskId, LocalDate newDate) {
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement("UPDATE task SET scheduled_date = ? WHERE id = ?")) {
             if (newDate != null) stmt.setDate(1, Date.valueOf(newDate));
@@ -103,7 +94,7 @@ public class H2TaskRepository implements TaskRepository {
             stmt.setInt(2, taskId);
             stmt.executeUpdate();
         } catch (SQLException e) {
-            throw new RuntimeException("Errore aggiornamento data task", e);
+            throw new JTimeException("Errore aggiornamento data task: " + e.getMessage());
         }
     }
 
@@ -113,26 +104,24 @@ public class H2TaskRepository implements TaskRepository {
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             binder.bind(stmt);
             try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) list.add(mapRow(rs));
+                while (rs.next()) {
+                    Date sqlDate = rs.getDate("scheduled_date");
+                    list.add(new Task(
+                            rs.getInt("id"),
+                            rs.getInt("project_id"),
+                            rs.getString("title"),
+                            TaskStatus.valueOf(rs.getString("status")),
+                            TaskPriority.valueOf(rs.getString("priority")),
+                            Duration.ofMinutes(rs.getLong("estimated_minutes")),
+                            Duration.ofMinutes(rs.getLong("actual_minutes")),
+                            sqlDate != null ? sqlDate.toLocalDate() : null
+                    ));
+                }
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Errore esecuzione query task", e);
+            throw new JTimeException("Errore query task: " + e.getMessage());
         }
         return list;
-    }
-
-    private Task mapRow(ResultSet rs) throws SQLException {
-        Date sqlDate = rs.getDate("scheduled_date");
-        return new Task(
-                rs.getInt("id"),
-                rs.getInt("project_id"),
-                rs.getString("title"),
-                TaskStatus.valueOf(rs.getString("status")),
-                TaskPriority.valueOf(rs.getString("priority")),
-                Duration.ofMinutes(rs.getLong("estimated_minutes")),
-                Duration.ofMinutes(rs.getLong("actual_minutes")),
-                sqlDate != null ? sqlDate.toLocalDate() : null
-        );
     }
 
     @FunctionalInterface
